@@ -1,0 +1,140 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: 'Marcellus', 'Cinzel', serif;
+  --font-editorial: 'Cormorant Garamond', Georgia, serif;
+  --font-haute: 'Italiana', 'Cormorant Garamond', serif;
+  --font-sans: 'Outfit', system-ui, -apple-system, sans-serif;
+
+  /* Burnished Bronze & Copper Amber Palette */
+  --color-accent-primary: #d48b4e;
+  --color-accent-light: #f2bc88;
+  --color-accent-hover: #e7a369;
+  --color-accent-dark: #9b5620;
+
+  --color-stone-base: #0c0c0e;
+  --color-stone-card: #141318;
+  --color-stone-elevated: #1b1a22;
+  --color-stone-border: #262430;
+  --color-stone-subtle: #383644;
+
+  --color-sand-50: #fbf8f3;
+  --color-sand-100: #eee7dc;
+  --color-sand-200: #ded3c1;
+  --color-sand-300: #c5b8a3;
+  --color-sand-400: #948774;
+  --color-sand-500: #695e4e;
+}
+
+/* Base resets & typography */
+:root {
+  color-scheme: dark;
+}
+
+html {
+  background-color: #0c0c0e;
+  color: #fbf8f3;
+  font-family: 'Outfit', system-ui, sans-serif;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #0c0c0e;
+  color: #eee7dc;
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Custom font utilities */
+.font-display {
+  font-family: 'Marcellus', 'Cinzel', serif;
+  letter-spacing: 0.04em;
+}
+
+.font-editorial {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+.font-haute {
+  font-family: 'Italiana', 'Cormorant Garamond', serif;
+}
+
+.font-body {
+  font-family: 'Outfit', system-ui, sans-serif;
+}
+
+/* Dynamic theme classes */
+.theme-bronze {
+  --color-accent: #d48b4e;
+  --color-accent-hover: #e7a369;
+  --color-accent-glow: rgba(212, 139, 78, 0.25);
+  --color-accent-border: rgba(212, 139, 78, 0.35);
+}
+
+.theme-champagne {
+  --color-accent: #cfa856;
+  --color-accent-hover: #e0bc6e;
+  --color-accent-glow: rgba(207, 168, 86, 0.25);
+  --color-accent-border: rgba(207, 168, 86, 0.35);
+}
+
+.theme-terracotta {
+  --color-accent: #d96e43;
+  --color-accent-hover: #e8835a;
+  --color-accent-glow: rgba(217, 110, 67, 0.25);
+  --color-accent-border: rgba(217, 110, 67, 0.35);
+}
+
+/* Concrete & subtle noise texture overlays */
+.bg-concrete-pattern {
+  background-image: radial-gradient(rgba(212, 139, 78, 0.05) 1px, transparent 0),
+                    radial-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 0);
+  background-size: 32px 32px, 16px 16px;
+  background-position: 0 0, 16px 16px;
+}
+
+/* Foil text accents */
+.text-bronze-gradient {
+  background: linear-gradient(135deg, #f7d5b5 0%, #d48b4e 50%, #9b5620 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gold-gradient {
+  background: linear-gradient(135deg, #f5e2b8 0%, #cfa856 50%, #8c6a26 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0c0c0e;
+}
+::-webkit-scrollbar-thumb {
+  background: #262430;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #d48b4e;
+}
+
+/* Smooth keyframes */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
