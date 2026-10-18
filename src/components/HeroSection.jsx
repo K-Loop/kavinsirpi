@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronRight, ChevronLeft, Pause, Play, Sparkles } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
-import { ARTWORKS_DATA } from '../data/artworksData';
+import { useArtworks } from '../context/ArtworksContext';
 
 export default function HeroSection() {
   const { theme } = useTheme();
+  const { artworks } = useArtworks();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
@@ -12,14 +13,18 @@ export default function HeroSection() {
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
 
-  const totalWorks = ARTWORKS_DATA.length;
-  const currentArtwork = ARTWORKS_DATA[currentIndex];
+  const displayArtworks = artworks.length > 0 ? artworks : [];
+  const totalWorks = displayArtworks.length;
+  const safeIndex = totalWorks > 0 ? Math.min(currentIndex, totalWorks - 1) : 0;
+  const currentArtwork = displayArtworks[safeIndex];
 
   const handleNext = useCallback(() => {
+    if (totalWorks <= 1) return;
     setCurrentIndex((prev) => (prev + 1) % totalWorks);
   }, [totalWorks]);
 
   const handlePrev = useCallback(() => {
+    if (totalWorks <= 1) return;
     setCurrentIndex((prev) => (prev - 1 + totalWorks) % totalWorks);
   }, [totalWorks]);
 
@@ -159,8 +164,8 @@ export default function HeroSection() {
             aria-label="Artworks Showcase Carousel"
           >
             {/* Artworks Image Stack with Smooth Cross-Fade Transition */}
-            {ARTWORKS_DATA.map((art, idx) => {
-              const isCurrent = idx === currentIndex;
+            {displayArtworks.map((art, idx) => {
+              const isCurrent = idx === safeIndex;
               // Render current and adjacent images for preloading and smooth cross-fade
               const isAdjacent =
                 Math.abs(idx - currentIndex) === 1 ||
@@ -305,8 +310,8 @@ export default function HeroSection() {
               AUTO-SLIDING SHOWCASE
             </span>
             <div className="flex items-center gap-1.5 overflow-hidden">
-              {ARTWORKS_DATA.slice(0, 8).map((art, i) => {
-                const isActive = i === currentIndex;
+              {displayArtworks.slice(0, 8).map((art, i) => {
+                const isActive = i === safeIndex;
                 return (
                   <button
                     key={art.id}

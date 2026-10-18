@@ -1,19 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ARTWORK_CATEGORIES, ARTWORKS_DATA } from '../data/artworksData';
 import ProjectLightbox from './ProjectLightbox';
 import { useTheme } from '../context/ThemeContext';
-import { Eye, ArrowUpRight, ChevronLeft, ChevronRight, Filter, Sparkles, LayoutGrid } from 'lucide-react';
+import { useArtworks } from '../context/ArtworksContext';
+import { Eye, ArrowUpRight, ChevronLeft, ChevronRight, Filter, LayoutGrid } from 'lucide-react';
 
 export default function ArtworkGallery() {
   const { theme } = useTheme();
+  const { artworks, categories } = useArtworks();
   const [selectedCategory, setSelectedCategory] = useState("All Works");
   const [activeArtworkIndex, setActiveArtworkIndex] = useState(null);
   const [hoveredArtwork, setHoveredArtwork] = useState(null);
   const [carouselIsHovered, setCarouselIsHovered] = useState(false);
 
   const filteredArtworks = selectedCategory === "All Works"
-    ? ARTWORKS_DATA
-    : ARTWORKS_DATA.filter(art => art.category === selectedCategory);
+    ? artworks
+    : artworks.filter(art => art.category === selectedCategory);
 
   const activeArtwork = activeArtworkIndex !== null ? filteredArtworks[activeArtworkIndex] : null;
 
@@ -114,7 +115,7 @@ export default function ArtworkGallery() {
                 className="flex items-center gap-2 overflow-x-auto scroll-smooth scrollbar-none py-1 px-0.5"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
-                {ARTWORK_CATEGORIES.map((category) => {
+                {categories.map((category) => {
                   const isSelected = selectedCategory === category;
                   return (
                     <button
@@ -161,7 +162,7 @@ export default function ArtworkGallery() {
                   }}
                   className="bg-transparent text-[#eee7dc] uppercase text-[11px] tracking-[0.15em] focus:outline-none cursor-pointer pr-1"
                 >
-                  {ARTWORK_CATEGORIES.map((cat) => (
+                  {categories.map((cat) => (
                     <option key={cat} value={cat} className="bg-[#121117] text-[#eee7dc]">
                       {cat}
                     </option>
