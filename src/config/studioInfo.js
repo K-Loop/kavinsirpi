@@ -15,9 +15,9 @@ export const STUDIO_CONFIG = {
   // Phone numbers format:
   // - displayPhone: human-readable format shown to visitors
   // - rawPhone: digits-only for tel: and wa.me links
-  displayPhone: "+91 98400 12345",
-  rawPhone: "+919840012345",
-  whatsappNumber: "919840012345", // Country code + digits without '+' or spaces
+  displayPhone: "+91 96882 40799",
+  rawPhone: "+919688240799",
+  whatsappNumber: "919688240799", // Country code + digits without '+' or spaces
 
   // WhatsApp prefilled enquiry messages
   whatsappDefaultMessage: "Hello Kavin Sirpi, I saw your sculpture portfolio and would like to enquire about a custom cement mural. Could you please share more details?",

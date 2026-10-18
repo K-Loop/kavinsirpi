@@ -1,7 +1,7 @@
 import React from 'react';
 import { STUDIO_CONFIG, getPhoneUrl, getWhatsAppUrl } from '../config/studioInfo';
 import { useTheme } from '../context/ThemeContext';
-import { Phone, MessageCircle } from 'lucide-react';
+import { Phone, MessageCircle, User } from 'lucide-react';
 
 export default function AboutArtist() {
   const { theme } = useTheme();
@@ -16,13 +16,19 @@ export default function AboutArtist() {
           {/* Left Column: Authentic Portrait */}
           <div className="lg:col-span-5 relative max-w-md mx-auto lg:max-w-none w-full">
             <div className="relative rounded-lg overflow-hidden border border-[#2b2836] shadow-2xl bg-[#121117] group">
-              <div className="aspect-[3/4] overflow-hidden">
-                <img
-                  src="/images/kavin-sirpi-portrait.png"
-                  alt="Portrait of Master Sculptor Kavin Sirpi beside his Murugan Vel and Peacock relief sculpture"
-                  className="w-full h-full object-cover object-top transform group-hover:scale-102 transition-transform duration-700 ease-out"
-                  loading="lazy"
-                />
+              <div className="aspect-[3/4] overflow-hidden flex flex-col items-center justify-center bg-[#131218] border border-dashed border-[#2e2a3a]/80 p-8 pb-24 text-center">
+                <div className="w-20 h-20 rounded-full bg-[#1b1924] border border-[#332f42] flex items-center justify-center mb-4 shadow-inner">
+                  <User className="w-9 h-9" style={{ color: theme.accent }} />
+                </div>
+                <p className="font-display text-base text-[#fbf8f3] tracking-wide mb-1">
+                  Artist Portrait
+                </p>
+                <p className="text-[11px] text-[#8e8578] uppercase tracking-[0.2em]">
+                  Photo Placeholder
+                </p>
+                <span className="mt-4 inline-block text-[10px] text-[#71695d] border border-[#272433] rounded px-3 py-1">
+                  Kavin Sirpi Studio
+                </span>
               </div>
 
               {/* Bottom Portrait Name Plaque */}
