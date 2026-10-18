@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { STUDIO_CONFIG, getWhatsAppUrl, getPhoneUrl } from '../config/studioInfo';
 import { useTheme } from '../context/ThemeContext';
-import { useArtworks } from '../context/ArtworksContext';
-import { Menu, X, Phone, MessageCircle, ShieldCheck } from 'lucide-react';
+import { Menu, X, Phone, MessageCircle } from 'lucide-react';
 
 export default function Navigation() {
   const { theme } = useTheme();
-  const { openAdmin } = useArtworks();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -66,18 +64,8 @@ export default function Navigation() {
           ))}
         </nav>
 
-        {/* Quick Contact & Admin Actions (Desktop) */}
+        {/* Quick Contact Actions (Desktop) */}
         <div className="hidden md:flex items-center gap-3">
-          {/* Dedicated /admin navigation button */}
-          <button
-            onClick={openAdmin}
-            className="flex items-center gap-1.5 text-xs font-mono tracking-wider uppercase text-[#d48b4e] hover:text-[#f2bc88] bg-[#d48b4e]/10 hover:bg-[#d48b4e]/20 border border-[#d48b4e]/30 hover:border-[#d48b4e]/60 px-3 py-1.5 rounded-full transition-all duration-200 cursor-pointer"
-            title="Admin: Add photos and manage gallery (/admin)"
-          >
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>/admin</span>
-          </button>
-
           <a
             href={getPhoneUrl()}
             className="flex items-center gap-2 text-xs tracking-wider uppercase text-[#cfc4b2] hover:text-[#fbf8f3] px-3.5 py-1.5 border border-[#2d2a36] hover:border-[#d48b4e]/60 rounded-full transition-colors"
@@ -99,17 +87,8 @@ export default function Navigation() {
           </a>
         </div>
 
-        {/* Mobile Hamburger & Quick Admin */}
+        {/* Mobile Hamburger */}
         <div className="flex items-center gap-2 lg:hidden">
-          <button
-            onClick={openAdmin}
-            className="flex items-center gap-1 text-[11px] font-mono tracking-wider uppercase text-[#d48b4e] bg-[#d48b4e]/10 border border-[#d48b4e]/30 px-2.5 py-1 rounded-full cursor-pointer"
-            title="Admin: Add photos (/admin)"
-          >
-            <ShieldCheck className="w-3 h-3" />
-            <span>/admin</span>
-          </button>
-
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="p-2 text-[#cfc4b2] hover:text-[#fbf8f3] focus:outline-none"
@@ -134,18 +113,6 @@ export default function Navigation() {
                 {link.name}
               </a>
             ))}
-
-            {/* Mobile /admin link */}
-            <button
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                openAdmin();
-              }}
-              className="mt-2 flex items-center justify-center gap-2 text-xs font-mono tracking-widest uppercase text-[#d48b4e] bg-[#d48b4e]/15 border border-[#d48b4e]/40 py-2.5 rounded-full transition-colors cursor-pointer"
-            >
-              <ShieldCheck className="w-4 h-4" />
-              <span>/admin (Photo Manager)</span>
-            </button>
           </nav>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center items-center pt-4 border-t border-[#22202a]">
