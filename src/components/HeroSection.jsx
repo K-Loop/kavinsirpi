@@ -1,20 +1,89 @@
-import React from 'react';
-import { ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { ChevronRight, ChevronLeft, Pause, Play, Sparkles } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { ARTWORKS_DATA } from '../data/artworksData';
 
 export default function HeroSection() {
   const { theme } = useTheme();
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
+  const autoPlayIntervalRef = useRef(null);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+
+  const totalWorks = ARTWORKS_DATA.length;
+  const currentArtwork = ARTWORKS_DATA[currentIndex];
+
+  const handleNext = useCallback(() => {
+    setCurrentIndex((prev) => (prev + 1) % totalWorks);
+  }, [totalWorks]);
+
+  const handlePrev = useCallback(() => {
+    setCurrentIndex((prev) => (prev - 1 + totalWorks) % totalWorks);
+  }, [totalWorks]);
+
+  const goToSlide = (index) => {
+    setCurrentIndex(index);
+  };
+
+  // Auto Slider Timer: advances every 4.5 seconds when not paused and not hovered
+  useEffect(() => {
+    if (isPlaying && !isHovered) {
+      autoPlayIntervalRef.current = setInterval(() => {
+        handleNext();
+      }, 4500);
+    }
+    return () => {
+      if (autoPlayIntervalRef.current) {
+        clearInterval(autoPlayIntervalRef.current);
+      }
+    };
+  }, [isPlaying, isHovered, handleNext]);
+
+  // Keyboard navigation when interacting with hero card
+  const handleKeyDown = (e) => {
+    if (e.key === 'ArrowRight') {
+      handleNext();
+    } else if (e.key === 'ArrowLeft') {
+      handlePrev();
+    } else if (e.key === ' ') {
+      e.preventDefault();
+      setIsPlaying((prev) => !prev);
+    }
+  };
+
+  // Mobile Touch Swipe Handlers
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    const swipeDistance = touchStartX.current - touchEndX.current;
+    if (Math.abs(swipeDistance) > 45) {
+      if (swipeDistance > 0) {
+        handleNext();
+      } else {
+        handlePrev();
+      }
+    }
+  };
 
   return (
     <section
       id="hero"
-      className="relative min-h-screen w-full flex items-center justify-center bg-[#0a0a0d] pt-24 pb-16 lg:py-0 overflow-hidden"
+      className="relative min-h-screen w-full flex flex-col justify-center bg-[#0a0a0d] pt-32 pb-16 sm:pt-36 sm:pb-20 lg:pt-36 lg:pb-16 overflow-hidden"
     >
       {/* Background Architectural Texture Grid */}
       <div className="absolute inset-0 bg-concrete-pattern opacity-40 pointer-events-none" />
 
       {/* Main Split Grid Layout */}
-      <div className="relative w-full max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center min-h-[calc(100vh-6rem)]">
+      <div className="relative w-full max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center my-auto">
 
         {/* Left Column: Editorial Typography & CTAs (balanced 50% split) */}
         <div className="lg:col-span-6 flex flex-col justify-center z-10 text-left order-2 lg:order-1 pt-2 lg:pt-0">
@@ -30,7 +99,7 @@ export default function HeroSection() {
             </span>
           </div>
 
-          {/* Main Headline in Marcellus Display Typography */}
+          {/* Main Headline in Display Typography */}
           <h1 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-normal tracking-[0.03em] leading-[1.14] text-[#fbf8f3] mb-5 sm:mb-6">
             Turning Walls Into Masterpieces.
           </h1>
@@ -74,40 +143,191 @@ export default function HeroSection() {
           </div>
         </div>
 
-        {/* Right Column: Hero High-Resolution Real Sculpture Photograph (Perfect 1:1 Fitted Card) */}
-        <div className="lg:col-span-6 relative order-1 lg:order-2 flex items-center justify-center w-full">
+        {/* Right Column: Hero Real Sculpture Interactive Auto-Slider Carousel */}
+        <div className="lg:col-span-6 relative order-1 lg:order-2 flex flex-col items-center justify-center w-full">
           
-          <div className="relative w-full max-w-[340px] sm:max-w-[420px] lg:max-w-[460px] aspect-[3/4] rounded-lg overflow-hidden border border-[#2b2836] shadow-2xl group bg-[#121117]">
-            <img
-              src="/images/crafts/elephant-relief-monumental-frontal.jpeg"
-              alt="Monumental handcrafted 3D cement elephant relief wall sculpture by Kavin Sirpi"
-              className="w-full h-full object-cover object-center transform group-hover:scale-102 transition-transform duration-1000 ease-out"
-              loading="eager"
-            />
+          {/* Main Card Container */}
+          <div
+            tabIndex={0}
+            onKeyDown={handleKeyDown}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            className="relative w-full max-w-[320px] sm:max-w-[380px] lg:max-w-[420px] aspect-[3/4] max-h-[66vh] rounded-lg overflow-hidden border border-[#2b2836] shadow-2xl group bg-[#121117] select-none focus:outline-none focus:ring-1 focus:ring-[#d48b4e]/40"
+            aria-label="Artworks Showcase Carousel"
+          >
+            {/* Artworks Image Stack with Smooth Cross-Fade Transition */}
+            {ARTWORKS_DATA.map((art, idx) => {
+              const isCurrent = idx === currentIndex;
+              // Render current and adjacent images for preloading and smooth cross-fade
+              const isAdjacent =
+                Math.abs(idx - currentIndex) === 1 ||
+                (currentIndex === 0 && idx === totalWorks - 1) ||
+                (currentIndex === totalWorks - 1 && idx === 0);
 
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0d] via-transparent to-transparent opacity-50 pointer-events-none" />
+              if (!isCurrent && !isAdjacent) return null;
 
-            {/* Artwork Overlay Badge */}
-            <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-auto bg-[#0a0a0e]/90 backdrop-blur-md border border-[#2b2836] px-3.5 py-2.5 rounded text-left max-w-xs z-10">
-              <span
-                className="text-[9px] uppercase tracking-[0.25em] block mb-0.5"
-                style={{ color: theme.accent }}
-              >
-                FEATURED INSTALLATION
-              </span>
-              <p className="text-xs font-display font-medium text-[#fbf8f3] tracking-wide truncate">
-                Monumental Frontal Tusker Relief
-              </p>
-              <p className="text-[10px] text-[#9e9488] font-light">
-                Direct in-situ cement relief carving • 10 ft × 8 ft
-              </p>
+              return (
+                <div
+                  key={art.id}
+                  className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+                    isCurrent ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'
+                  }`}
+                >
+                  <img
+                    src={art.image}
+                    alt={art.title}
+                    className={`w-full h-full object-cover object-center transform transition-transform duration-1000 ease-out ${
+                      isCurrent && isHovered ? 'scale-103' : 'scale-100'
+                    }`}
+                    loading={idx === 0 ? 'eager' : 'lazy'}
+                  />
+                </div>
+              );
+            })}
+
+            {/* Subtle Gradient Overlays for Readability and Depth */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0d] via-transparent to-[#0a0a0d]/30 opacity-70 pointer-events-none z-20" />
+
+            {/* Top Info Bar: Category Chip, Auto-Play Toggle & Slide Counter */}
+            <div className="absolute top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-4 flex items-center justify-between z-30 pointer-events-auto">
+              {/* Category Badge */}
+              <div className="bg-[#0a0a0e]/85 backdrop-blur-md border border-[#2b2836] px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-lg">
+                <Sparkles className="w-3 h-3" style={{ color: theme.accent }} />
+                <span
+                  className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] font-medium"
+                  style={{ color: theme.accent }}
+                >
+                  {currentArtwork.category}
+                </span>
+              </div>
+
+              {/* Counter & Play/Pause Button */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsPlaying(!isPlaying)}
+                  title={isPlaying ? "Pause auto-slider" : "Resume auto-slider"}
+                  aria-label={isPlaying ? "Pause carousel" : "Play carousel"}
+                  className="w-7 h-7 rounded-full bg-[#0a0a0e]/85 hover:bg-[#1a1922] backdrop-blur-md border border-[#2b2836] text-[#b8ad9c] hover:text-[#fbf8f3] flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+                >
+                  {isPlaying ? (
+                    <Pause className="w-3 h-3" />
+                  ) : (
+                    <Play className="w-3 h-3 translate-x-0.5 text-[#d48b4e]" />
+                  )}
+                </button>
+
+                <div className="bg-[#0a0a0e]/85 backdrop-blur-md border border-[#2b2836] px-2.5 py-1 rounded-full text-[10px] tracking-widest font-mono text-[#dcd4c6] shadow-lg">
+                  <span className="text-[#fbf8f3] font-semibold">
+                    {String(currentIndex + 1).padStart(2, '0')}
+                  </span>
+                  <span className="text-[#6d665b] mx-1">/</span>
+                  <span className="text-[#8c8475]">
+                    {String(totalWorks).padStart(2, '0')}
+                  </span>
+                </div>
+              </div>
             </div>
 
-            {/* Corner Accents */}
-            <div className="absolute top-3 left-3 w-3 h-3 border-t border-l border-[#d48b4e]/40 pointer-events-none z-10" />
-            <div className="absolute top-3 right-3 w-3 h-3 border-t border-r border-[#d48b4e]/40 pointer-events-none z-10" />
-            <div className="absolute bottom-3 left-3 w-3 h-3 border-b border-l border-[#d48b4e]/40 pointer-events-none z-10" />
-            <div className="absolute bottom-3 right-3 w-3 h-3 border-b border-r border-[#d48b4e]/40 pointer-events-none z-10" />
+            {/* Manual Slide Navigation Arrows */}
+            <button
+              type="button"
+              onClick={handlePrev}
+              aria-label="Previous artwork"
+              className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#0a0a0e]/75 hover:bg-[#16151e] backdrop-blur-md border border-[#2b2836] hover:border-[#d48b4e]/70 text-[#eee7dc] hover:text-[#fbf8f3] flex items-center justify-center transition-all duration-300 opacity-80 sm:opacity-0 group-hover:opacity-100 z-30 shadow-xl hover:scale-105 active:scale-95"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={handleNext}
+              aria-label="Next artwork"
+              className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#0a0a0e]/75 hover:bg-[#16151e] backdrop-blur-md border border-[#2b2836] hover:border-[#d48b4e]/70 text-[#eee7dc] hover:text-[#fbf8f3] flex items-center justify-center transition-all duration-300 opacity-80 sm:opacity-0 group-hover:opacity-100 z-30 shadow-xl hover:scale-105 active:scale-95"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+
+            {/* Auto-Slide Dynamic Progress Line (resets and fills on each slide) */}
+            <div className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#1a1924] z-30 overflow-hidden">
+              <div
+                key={currentIndex + (isPlaying && !isHovered ? '-playing' : '-paused')}
+                style={{
+                  backgroundColor: theme.accent,
+                  animation: isPlaying && !isHovered ? 'heroProgress 4.5s linear forwards' : 'none',
+                  width: isPlaying && !isHovered ? undefined : '0%'
+                }}
+                className="h-full"
+              />
+            </div>
+
+            {/* Artwork Overlay Badge with Live Information */}
+            <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 bg-[#0a0a0e]/92 backdrop-blur-md border border-[#2b2836] px-3.5 py-3 rounded text-left z-30 transition-all duration-300 shadow-2xl">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <span
+                    className="text-[9px] uppercase tracking-[0.25em] block mb-0.5 font-medium truncate"
+                    style={{ color: theme.accent }}
+                  >
+                    ARTWORK {currentIndex + 1} OF {totalWorks} • {currentArtwork.category.toUpperCase()}
+                  </span>
+                  <p className="text-xs sm:text-[13px] font-display font-medium text-[#fbf8f3] tracking-wide truncate">
+                    {currentArtwork.title}
+                  </p>
+                  <p className="text-[10px] text-[#9e9488] font-light truncate mt-0.5">
+                    {currentArtwork.medium} • {currentArtwork.dimensions}
+                  </p>
+                </div>
+
+                <a
+                  href="#artworks"
+                  title="View full artwork portfolio"
+                  className="flex-shrink-0 text-[10px] uppercase tracking-wider font-medium text-[#c4b9a7] hover:text-[#fbf8f3] underline decoration-[#d48b4e]/60 underline-offset-4 self-center ml-1"
+                >
+                  EXPLORE
+                </a>
+              </div>
+            </div>
+
+            {/* Corner Architectural Accents */}
+            <div className="absolute top-3 left-3 w-3 h-3 border-t border-l border-[#d48b4e]/40 pointer-events-none z-30" />
+            <div className="absolute top-3 right-3 w-3 h-3 border-t border-r border-[#d48b4e]/40 pointer-events-none z-30" />
+            <div className="absolute bottom-3 left-3 w-3 h-3 border-b border-l border-[#d48b4e]/40 pointer-events-none z-30" />
+            <div className="absolute bottom-3 right-3 w-3 h-3 border-b border-r border-[#d48b4e]/40 pointer-events-none z-30" />
+          </div>
+
+          {/* Quick Slider Thumbnails / Dots Strip under Hero Card */}
+          <div className="w-full max-w-[340px] sm:max-w-[420px] lg:max-w-[460px] mt-4 flex items-center justify-between px-1">
+            <span className="text-[10px] tracking-[0.2em] uppercase text-[#8c8475]">
+              AUTO-SLIDING SHOWCASE
+            </span>
+            <div className="flex items-center gap-1.5 overflow-hidden">
+              {ARTWORKS_DATA.slice(0, 8).map((art, i) => {
+                const isActive = i === currentIndex;
+                return (
+                  <button
+                    key={art.id}
+                    type="button"
+                    onClick={() => goToSlide(i)}
+                    aria-label={`Go to artwork ${i + 1}`}
+                    style={isActive ? { backgroundColor: theme.accent } : {}}
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      isActive
+                        ? 'w-6 shadow-sm'
+                        : 'w-2 bg-[#2d2a38] hover:bg-[#464155]'
+                    }`}
+                  />
+                );
+              })}
+              {totalWorks > 8 && (
+                <span className="text-[9px] text-[#716a5f] font-mono ml-0.5">
+                  +{totalWorks - 8}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -120,3 +340,4 @@ export default function HeroSection() {
     </section>
   );
 }
+
