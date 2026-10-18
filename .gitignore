@@ -28,7 +28,10 @@ dist-ssr
 
 # Backend
 server/node_modules
+server/*.env
 server/.env
+server/.env.*
+!server/.env.example
 server/uploads/*
 !server/uploads/.gitkeep
 server/data/artworks_store.json
