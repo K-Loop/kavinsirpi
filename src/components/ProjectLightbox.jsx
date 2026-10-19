@@ -28,8 +28,7 @@ export default function ProjectLightbox({
   hasNext
 }) {
   const { theme } = useTheme();
-  const [showDetails, setShowDetails] = useState(true);
-  const [isHovered, setIsHovered] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [touchStartX, setTouchStartX] = useState(null);
   const filmstripRef = useRef(null);
@@ -48,9 +47,10 @@ export default function ProjectLightbox({
     }
   }, [currentIndex]);
 
-  // Reset zoom whenever artwork changes
+  // Details tab is always closed on first open and when artwork changes
   useEffect(() => {
     setZoomLevel(1);
+    setShowDetails(false);
   }, [artwork]);
 
   const handleClose = useCallback(() => {
@@ -110,9 +110,6 @@ export default function ProjectLightbox({
   const currentNum = (currentIndex !== null && currentIndex !== undefined) ? currentIndex + 1 : 1;
   const customEnquiryMessage = `Hello Kavin Sirpi, I am interested in commissioning a cement relief sculpture similar to "${artwork.title}" (${artwork.category}). Could you please share more details?`;
 
-  // The overlay is visible if explicitly toggled on OR when the user is hovering/interacting
-  const isOverlayOpen = showDetails || isHovered;
-
   return (
     <div
       role="dialog"
@@ -120,8 +117,8 @@ export default function ProjectLightbox({
       aria-label={artwork.title}
       className="fixed inset-0 z-50 flex flex-col justify-between bg-[#050507]/98 backdrop-blur-2xl text-[#eee7dc] select-none animate-fade-in"
       onClick={() => {
-        // Clicking backdrop toggles details overlay in Windows Photos / Phone Gallery style
-        setShowDetails((prev) => !prev);
+        // Clicking backdrop closes details tab if open
+        if (showDetails) setShowDetails(false);
       }}
     >
       {/* =========================================================================
@@ -205,7 +202,7 @@ export default function ProjectLightbox({
             type="button"
             onClick={() => setShowDetails((prev) => !prev)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all ${
-              isOverlayOpen
+              showDetails
                 ? 'bg-[#d48b4e]/20 border-[#d48b4e] text-[#fbf8f3]'
                 : 'bg-[#16151e] hover:bg-[#22202c] border-[#2a2838] text-[#ded3c1]'
             }`}
@@ -241,10 +238,10 @@ export default function ProjectLightbox({
       </header>
 
       {/* =========================================================================
-          Center Canvas: Large Image with Hover/Click Details Overlay
+          Center Canvas: Photo + Beside-Photo Details Panel (Opens on Click Only)
          ========================================================================= */}
       <main
-        className="relative flex-grow flex items-center justify-center overflow-hidden p-2 sm:p-4 md:p-6"
+        className="relative flex-grow flex items-center justify-center overflow-hidden p-3 sm:p-5 md:p-6"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -256,7 +253,7 @@ export default function ProjectLightbox({
               e.stopPropagation();
               onPrev();
             }}
-            className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-[#100f16]/85 hover:bg-[#1a1924] border border-[#2d2a3a] hover:border-[#d48b4e] text-[#ded3c1] hover:text-[#fbf8f3] flex items-center justify-center transition-all shadow-2xl hover:scale-105 active:scale-95 backdrop-blur-md"
+            className="absolute left-2 sm:left-4 md:left-6 top-1/2 -translate-y-1/2 z-40 w-11 h-11 rounded-full bg-[#100f16]/85 hover:bg-[#1a1924] border border-[#2d2a3a] hover:border-[#d48b4e] text-[#ded3c1] hover:text-[#fbf8f3] flex items-center justify-center transition-all shadow-2xl hover:scale-105 active:scale-95 backdrop-blur-md"
             aria-label="Previous artwork"
           >
             <ChevronLeft className="w-6 h-6" />
@@ -271,131 +268,128 @@ export default function ProjectLightbox({
               e.stopPropagation();
               onNext();
             }}
-            className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-[#100f16]/85 hover:bg-[#1a1924] border border-[#2d2a3a] hover:border-[#d48b4e] text-[#ded3c1] hover:text-[#fbf8f3] flex items-center justify-center transition-all shadow-2xl hover:scale-105 active:scale-95 backdrop-blur-md"
+            className="absolute right-2 sm:right-4 md:right-6 top-1/2 -translate-y-1/2 z-40 w-11 h-11 rounded-full bg-[#100f16]/85 hover:bg-[#1a1924] border border-[#2d2a3a] hover:border-[#d48b4e] text-[#ded3c1] hover:text-[#fbf8f3] flex items-center justify-center transition-all shadow-2xl hover:scale-105 active:scale-95 backdrop-blur-md"
             aria-label="Next artwork"
           >
             <ChevronRight className="w-6 h-6" />
           </button>
         )}
 
-        {/* Image Container with Zoom & Hover Overlay Trigger */}
-        <div
-          onClick={(e) => {
-            // Tapping/clicking image toggles overlay visibility
-            e.stopPropagation();
-            setShowDetails((prev) => !prev);
-          }}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          className="relative max-h-full max-w-full flex items-center justify-center cursor-pointer group"
-          title="Click to toggle details overlay"
-        >
-          {/* Main Artwork Image */}
-          <img
-            src={artwork.image}
-            alt={artwork.title}
-            style={{
-              transform: `scale(${zoomLevel})`,
-              transition: 'transform 0.25s ease-out'
+        {/* Main Split Stage: Photo in center/left, Details Panel BESIDE IT on right when clicked */}
+        <div className="relative w-full h-full max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-center gap-4 lg:gap-8 px-2 sm:px-8 md:px-14 overflow-hidden">
+          
+          {/* PHOTO STAGE: 100% Clean on first open, click photo to toggle details */}
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowDetails((prev) => !prev);
             }}
-            className="max-h-[64vh] sm:max-h-[68vh] md:max-h-[72vh] w-auto max-w-full object-contain rounded-lg shadow-2xl transition-all"
-            loading="eager"
-          />
-
-          {/* Visual Tap / Click Hint for mobile/desktop */}
-          <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-            <span className="px-2.5 py-1 rounded-full text-[10px] bg-[#0c0c11]/80 backdrop-blur-md border border-[#2a2838] text-[#a9a296] font-mono">
-              Click photo to {isOverlayOpen ? 'hide' : 'show'} info
-            </span>
+            className="relative flex-1 min-w-0 max-h-full h-full flex items-center justify-center cursor-pointer select-none transition-all duration-300"
+            title={showDetails ? "Click to hide details" : "Click to view details beside photo"}
+          >
+            <img
+              src={artwork.image}
+              alt={artwork.title}
+              style={{
+                transform: `scale(${zoomLevel})`,
+                transition: 'transform 0.25s ease-out'
+              }}
+              className="max-h-[58vh] sm:max-h-[66vh] md:max-h-[74vh] w-auto max-w-full object-contain rounded-xl shadow-2xl transition-all"
+              loading="eager"
+            />
           </div>
 
           {/* =====================================================================
-              FLOATING DETAILS OVERLAY
-              Appears smoothly when clicked or hovered over the artwork!
+              SIDE DETAILS PANEL: POSITIONED BESIDE THE PHOTO (NEVER ON TOP)
+              Strictly appears ONLY when clicked! Completely closed on first opening.
              ===================================================================== */}
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className={`absolute bottom-3 sm:bottom-5 left-3 sm:left-5 right-3 sm:right-5 max-w-2xl mx-auto z-30 transition-all duration-300 transform ${
-              isOverlayOpen
-                ? 'opacity-100 translate-y-0 pointer-events-auto'
-                : 'opacity-0 translate-y-4 pointer-events-none'
-            }`}
-          >
-            <div className="relative p-5 sm:p-6 rounded-2xl bg-[#0d0c14]/90 backdrop-blur-2xl border border-[#2d2a3c] shadow-2xl text-left">
-              {/* Close / Minimize Overlay Button */}
-              <button
-                type="button"
-                onClick={() => setShowDetails(false)}
-                className="absolute top-4 right-4 p-1.5 rounded-full bg-[#181622] hover:bg-[#242230] text-[#a9a296] hover:text-[#fbf8f3] border border-[#2d2a3c] transition-all"
-                title="Hide details"
-              >
-                <EyeOff className="w-3.5 h-3.5" />
-              </button>
+          {showDetails && (
+            <aside
+              onClick={(e) => e.stopPropagation()}
+              className="w-full md:w-[340px] lg:w-[400px] max-h-[38vh] md:max-h-[74vh] flex-shrink-0 z-30 transition-all duration-300 ease-out animate-fade-in"
+            >
+            <div className="relative p-5 sm:p-6 rounded-2xl bg-[#0d0c14]/95 backdrop-blur-2xl border border-[#2d2a3c] shadow-2xl text-left flex flex-col justify-between max-h-[36vh] md:max-h-[74vh] overflow-y-auto">
+              <div>
+                {/* Header: Category Badge, Dimensions & Close Button */}
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span
+                      style={{ color: theme.accent, borderColor: `${theme.accent}40` }}
+                      className="inline-block text-[9px] uppercase tracking-[0.22em] font-semibold border px-2.5 py-0.5 rounded-full bg-[#151420]"
+                    >
+                      {artwork.category}
+                    </span>
+                    {artwork.dimensions && (
+                      <span className="text-[10px] text-[#cfc4b2] bg-[#161520] px-2.5 py-0.5 rounded-full border border-[#272535]">
+                        {artwork.dimensions}
+                      </span>
+                    )}
+                  </div>
 
-              {/* Category & Index Pill */}
-              <div className="flex items-center gap-2 mb-2 flex-wrap">
-                <span
-                  style={{ color: theme.accent, borderColor: `${theme.accent}40` }}
-                  className="inline-block text-[9px] uppercase tracking-[0.25em] font-semibold border px-2.5 py-0.5 rounded-full bg-[#151420]"
-                >
-                  {artwork.category}
-                </span>
-                {artwork.dimensions && (
-                  <span className="text-[10px] text-[#cfc4b2] bg-[#161520] px-2.5 py-0.5 rounded-full border border-[#272535]">
-                    {artwork.dimensions}
-                  </span>
-                )}
+                  <button
+                    type="button"
+                    onClick={() => setShowDetails(false)}
+                    className="p-1.5 rounded-full bg-[#181622] hover:bg-[#242230] text-[#a9a296] hover:text-[#fbf8f3] border border-[#2d2a3c] transition-all flex-shrink-0"
+                    title="Close details"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {/* Artwork Title */}
+                <h3 className="font-display text-lg sm:text-2xl font-normal text-[#fbf8f3] tracking-wide mb-1.5 drop-shadow-sm">
+                  {artwork.title}
+                </h3>
+
+                {/* Medium */}
                 {artwork.medium && (
-                  <span className="text-[10px] text-[#cfc4b2] bg-[#161520] px-2.5 py-0.5 rounded-full border border-[#272535] hidden sm:inline">
+                  <p className="text-xs font-mono tracking-wide mb-3" style={{ color: theme.accent }}>
                     {artwork.medium}
-                  </span>
+                  </p>
+                )}
+
+                {/* Description */}
+                {artwork.description && (
+                  <p className="font-editorial text-xs sm:text-sm text-[#ded3c1] leading-relaxed mb-4">
+                    {artwork.description}
+                  </p>
+                )}
+
+                {/* Highlights tags */}
+                {artwork.highlights && artwork.highlights.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-4">
+                    {artwork.highlights.map((item, idx) => (
+                      <span
+                        key={idx}
+                        className="text-[10px] text-[#b8ad9c] bg-[#13121b] border border-[#252332] px-2 py-0.5 rounded"
+                      >
+                        • {item}
+                      </span>
+                    ))}
+                  </div>
                 )}
               </div>
 
-              {/* Artwork Title */}
-              <h3 className="font-display text-lg sm:text-2xl font-normal text-[#fbf8f3] tracking-wide mb-2 drop-shadow-sm pr-6">
-                {artwork.title}
-              </h3>
-
-              {/* Description */}
-              {artwork.description && (
-                <p className="font-editorial text-xs sm:text-sm text-[#ded3c1] line-clamp-3 sm:line-clamp-4 leading-relaxed mb-4">
-                  {artwork.description}
-                </p>
-              )}
-
-              {/* Highlights tags if present */}
-              {artwork.highlights && artwork.highlights.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-4 hidden sm:flex">
-                  {artwork.highlights.map((item, idx) => (
-                    <span
-                      key={idx}
-                      className="text-[10px] text-[#b8ad9c] bg-[#13121b] border border-[#252332] px-2 py-0.5 rounded"
-                    >
-                      • {item}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {/* Bottom Action Bar inside Overlay */}
-              <div className="flex items-center justify-between pt-3 border-t border-[#232130]">
-                <div className="text-[11px] text-[#8c8475] hidden sm:block">
-                  Direct In-Situ Cement Mortar Carving
-                </div>
+              {/* Bottom Action / WhatsApp Enquiry CTA */}
+              <div className="pt-3 border-t border-[#232130] mt-2">
                 <a
                   href={getWhatsAppUrl(customEnquiryMessage)}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{ backgroundColor: theme.accent }}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[#0b0b0e] hover:brightness-110 text-xs font-semibold uppercase tracking-[0.15em] transition-all shadow-md ml-auto"
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-[#0b0b0e] hover:brightness-110 text-xs font-semibold uppercase tracking-[0.15em] transition-all shadow-md"
                 >
                   <MessageCircle className="w-3.5 h-3.5 fill-[#0b0b0e]" />
                   <span>Enquire for Custom Relief</span>
                 </a>
+                <p className="text-[10px] text-[#716a5f] text-center mt-2 font-mono">
+                  Direct In-Situ Cement Mortar Carving
+                </p>
               </div>
             </div>
-          </div>
+          </aside>
+        )}
+
         </div>
       </main>
 
