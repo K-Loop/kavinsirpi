@@ -2,7 +2,17 @@ import React, { useState, useRef, useEffect } from 'react';
 import ProjectLightbox from './ProjectLightbox';
 import { useTheme } from '../context/ThemeContext';
 import { useArtworks } from '../context/ArtworksContext';
-import { Eye, ArrowUpRight, ChevronLeft, ChevronRight, Filter, LayoutGrid } from 'lucide-react';
+import {
+  Eye,
+  ArrowUpRight,
+  ChevronLeft,
+  ChevronRight,
+  Filter,
+  LayoutGrid,
+  Film,
+  Sparkles,
+  Maximize2
+} from 'lucide-react';
 
 export default function ArtworkGallery() {
   const { theme } = useTheme();
@@ -10,6 +20,7 @@ export default function ArtworkGallery() {
   const [selectedCategory, setSelectedCategory] = useState("All Works");
   const [activeArtworkIndex, setActiveArtworkIndex] = useState(null);
   const [hoveredArtwork, setHoveredArtwork] = useState(null);
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' (phone/album grid) | 'spotlight' (scrolling reel)
   const [carouselIsHovered, setCarouselIsHovered] = useState(false);
 
   const filteredArtworks = selectedCategory === "All Works"
@@ -53,9 +64,9 @@ export default function ArtworkGallery() {
     }
   };
 
-  // Auto-scroll the big carousel smoothly every 4 seconds, pausing when hovered
+  // Auto-scroll the spotlight carousel smoothly every 4.5 seconds when not hovered
   useEffect(() => {
-    if (carouselIsHovered) return;
+    if (carouselIsHovered || viewMode !== 'spotlight') return;
     const interval = setInterval(() => {
       if (bigCarouselRef.current) {
         const { scrollLeft, scrollWidth, clientWidth } = bigCarouselRef.current;
@@ -65,51 +76,49 @@ export default function ArtworkGallery() {
           bigCarouselRef.current.scrollBy({ left: 380, behavior: 'smooth' });
         }
       }
-    }, 4000);
+    }, 4500);
     return () => clearInterval(interval);
-  }, [carouselIsHovered, filteredArtworks]);
+  }, [carouselIsHovered, filteredArtworks, viewMode]);
 
   return (
-    <section id="artworks" className="relative py-28 bg-[#0c0c0e] border-t border-[#1a1922]">
-      <div className="absolute inset-0 bg-concrete-pattern opacity-30 pointer-events-none" />
+    <section id="artworks" className="relative py-24 sm:py-28 bg-[#0a0a0d] border-t border-[#181722]">
+      <div className="absolute inset-0 bg-concrete-pattern opacity-25 pointer-events-none" />
 
-      <div className="relative max-w-7xl mx-auto px-6 md:px-12">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-12">
         {/* Section Header */}
-        <div className="max-w-3xl mb-14 text-left">
+        <div className="max-w-3xl mb-12 text-left">
           <div className="inline-flex items-center gap-3 mb-3">
             <span className="w-5 h-[1px]" style={{ backgroundColor: theme.accent }} />
             <span
               className="text-[11px] uppercase tracking-[0.25em] font-medium"
               style={{ color: theme.accent }}
             >
-              CURATED PORTFOLIO
+              ARCHITECTURAL ALBUMS
             </span>
           </div>
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-normal text-[#fbf8f3] tracking-wide mb-4">
+          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-normal text-[#fbf8f3] tracking-wide mb-3">
             Masterworks of Cement Relief
           </h2>
-          <p className="font-editorial text-lg text-[#b8ad9c] leading-relaxed">
-            Each wall relief is hand-carved in high-grade cement mortar without the use of precast molds. Explore our signature commissions across architectural spaces.
+          <p className="font-editorial text-base sm:text-lg text-[#b8ad9c] leading-relaxed">
+            Hand-carved directly into high-grade cement mortar in-situ. Tap or hover any artwork to reveal its details, or click to open the full Windows Photos & phone gallery album viewer.
           </p>
         </div>
 
-        {/* Category Controls Bar: Carousel with Navigation Arrows + Quick Dropdown */}
-        <div className="mb-10 border-b border-[#201e29] pb-4">
+        {/* Windows Albums / Phone Gallery Navigation Bar */}
+        <div className="mb-8 border-b border-[#1f1d2b] pb-4">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
             
-            {/* Carousel Navigation with Left / Right Arrows */}
+            {/* Scrollable Album Tabs */}
             <div className="relative flex items-center min-w-0 flex-1">
-              {/* Left Carousel Arrow */}
               <button
                 type="button"
                 onClick={() => scrollCategories('left')}
-                aria-label="Scroll categories left"
-                className="flex items-center justify-center w-8 h-8 rounded-full bg-[#14131a] hover:bg-[#1f1d28] border border-[#282635] text-[#b8ad9c] hover:text-[#fbf8f3] transition-all flex-shrink-0 mr-2 shadow-md hover:scale-105 active:scale-95"
+                aria-label="Scroll album categories left"
+                className="flex items-center justify-center w-8 h-8 rounded-full bg-[#131219] hover:bg-[#1f1d28] border border-[#262433] text-[#b8ad9c] hover:text-[#fbf8f3] transition-all flex-shrink-0 mr-2 shadow-md hover:scale-105 active:scale-95"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
 
-              {/* Scrollable Pills Carousel */}
               <div
                 ref={categoriesRef}
                 className="flex items-center gap-2 overflow-x-auto scroll-smooth scrollbar-none py-1 px-0.5"
@@ -117,6 +126,10 @@ export default function ArtworkGallery() {
               >
                 {categories.map((category) => {
                   const isSelected = selectedCategory === category;
+                  const count = category === "All Works" 
+                    ? artworks.length 
+                    : artworks.filter(a => a.category === category).length;
+
                   return (
                     <button
                       key={category}
@@ -125,128 +138,128 @@ export default function ArtworkGallery() {
                         setActiveArtworkIndex(null);
                         setHoveredArtwork(null);
                       }}
-                      style={isSelected ? { backgroundColor: theme.accent, color: '#0b0b0e' } : {}}
-                      className={`text-xs uppercase tracking-[0.18em] px-4 py-2.5 rounded-full transition-all duration-300 whitespace-nowrap focus:outline-none flex-shrink-0 ${
+                      style={isSelected ? { backgroundColor: theme.accent, color: '#09090c' } : {}}
+                      className={`text-xs uppercase tracking-[0.16em] px-4 py-2.5 rounded-full transition-all duration-300 whitespace-nowrap focus:outline-none flex-shrink-0 flex items-center gap-2 ${
                         isSelected
-                          ? 'font-semibold shadow-md'
-                          : 'text-[#a9a296] hover:text-[#fbf8f3] hover:bg-[#15141c] border border-transparent hover:border-[#282633]'
+                          ? 'font-semibold shadow-lg scale-102'
+                          : 'text-[#9e968a] hover:text-[#fbf8f3] hover:bg-[#14131b] border border-transparent hover:border-[#262433]'
                       }`}
                     >
-                      {category}
+                      <span>{category}</span>
+                      <span
+                        className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+                          isSelected ? 'bg-[#09090c]/25 text-[#09090c]' : 'bg-[#181622] text-[#716a5f]'
+                        }`}
+                      >
+                        {count}
+                      </span>
                     </button>
                   );
                 })}
               </div>
 
-              {/* Right Carousel Arrow */}
               <button
                 type="button"
                 onClick={() => scrollCategories('right')}
-                aria-label="Scroll categories right"
-                className="flex items-center justify-center w-8 h-8 rounded-full bg-[#14131a] hover:bg-[#1f1d28] border border-[#282635] text-[#b8ad9c] hover:text-[#fbf8f3] transition-all flex-shrink-0 ml-2 shadow-md hover:scale-105 active:scale-95"
+                aria-label="Scroll album categories right"
+                className="flex items-center justify-center w-8 h-8 rounded-full bg-[#131219] hover:bg-[#1f1d28] border border-[#262433] text-[#b8ad9c] hover:text-[#fbf8f3] transition-all flex-shrink-0 ml-2 shadow-md hover:scale-105 active:scale-95"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Quick Filter Dropdown */}
-            <div className="relative flex-shrink-0 self-end sm:self-auto">
-              <div className="flex items-center gap-2 bg-[#121117] border border-[#282633] hover:border-[#d48b4e]/60 rounded-full px-3.5 py-2 text-xs text-[#cfc4b2] shadow-md transition-colors">
-                <Filter className="w-3.5 h-3.5" style={{ color: theme.accent }} />
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => {
-                    setSelectedCategory(e.target.value);
-                    setActiveArtworkIndex(null);
-                    setHoveredArtwork(null);
-                  }}
-                  className="bg-transparent text-[#eee7dc] uppercase text-[11px] tracking-[0.15em] focus:outline-none cursor-pointer pr-1"
+            {/* View Mode Switcher & Quick Dropdown Filter */}
+            <div className="flex items-center gap-2.5 self-end sm:self-auto flex-shrink-0">
+              {/* Grid / Reel View Mode Toggle */}
+              <div className="flex items-center bg-[#121118] border border-[#242230] rounded-full p-1 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('grid')}
+                  style={viewMode === 'grid' ? { backgroundColor: `${theme.accent}25`, color: theme.accent } : {}}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all ${
+                    viewMode === 'grid'
+                      ? 'font-medium'
+                      : 'text-[#8c8475] hover:text-[#ded3c1]'
+                  }`}
+                  title="Phone Gallery Grid View"
                 >
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat} className="bg-[#121117] text-[#eee7dc]">
-                      {cat}
-                    </option>
-                  ))}
-                </select>
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Album Grid</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('spotlight')}
+                  style={viewMode === 'spotlight' ? { backgroundColor: `${theme.accent}25`, color: theme.accent } : {}}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all ${
+                    viewMode === 'spotlight'
+                      ? 'font-medium'
+                      : 'text-[#8c8475] hover:text-[#ded3c1]'
+                  }`}
+                  title="Spotlight Carousel View"
+                >
+                  <Film className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Spotlight Reel</span>
+                </button>
               </div>
+
+              {/* Quick Category Select */}
+              <div className="relative">
+                <div className="flex items-center gap-2 bg-[#121118] border border-[#242230] hover:border-[#d48b4e]/60 rounded-full px-3 py-1.5 text-xs text-[#cfc4b2] shadow-md transition-colors">
+                  <Filter className="w-3.5 h-3.5" style={{ color: theme.accent }} />
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => {
+                      setSelectedCategory(e.target.value);
+                      setActiveArtworkIndex(null);
+                      setHoveredArtwork(null);
+                    }}
+                    className="bg-transparent text-[#eee7dc] uppercase text-[10px] tracking-[0.14em] focus:outline-none cursor-pointer pr-1"
+                  >
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat} className="bg-[#121118] text-[#eee7dc]">
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
             </div>
 
           </div>
         </div>
 
-        {/* Big Showcase Carousel Section */}
-        <div
-          className="mb-20 text-left"
-          onMouseEnter={() => setCarouselIsHovered(true)}
-          onMouseLeave={() => {
-            setCarouselIsHovered(false);
-            setHoveredArtwork(null);
-          }}
-        >
-          {/* Top Bar for the Big Carousel: Active Name on Hover + Navigation Arrows */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5 px-1">
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full animate-ping" style={{ backgroundColor: theme.accent }} />
-              <div className="flex flex-col">
-                <span className="text-[10px] uppercase tracking-[0.25em] text-[#8c8475] font-medium">
-                  FEATURED SCULPTURAL SHOWCASE
-                </span>
-                {hoveredArtwork ? (
-                  <h3 className="font-display text-lg sm:text-xl text-[#fbf8f3] tracking-wide animate-fade-in flex items-center gap-2">
-                    <span style={{ color: theme.accent }}>{hoveredArtwork.title}</span>
-                    <span className="hidden md:inline text-xs text-[#a9a296] font-editorial font-light">
-                      — {hoveredArtwork.category} ({hoveredArtwork.dimensions})
-                    </span>
-                  </h3>
-                ) : (
-                  <p className="font-display text-sm sm:text-base text-[#cfc4b2] tracking-wide">
-                    Glide through our monumental architectural reliefs • Hover any piece to view name
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Left and Right Carousel Control Arrows */}
-            <div className="flex items-center gap-2 self-end sm:self-auto">
-              <span className="text-[10px] tracking-[0.2em] uppercase text-[#716a5f] mr-2 hidden sm:inline">
-                AUTO-SLIDING ({filteredArtworks.length})
-              </span>
-              <button
-                type="button"
-                onClick={() => scrollBigCarousel('left')}
-                aria-label="Previous carousel artworks"
-                className="w-10 h-10 rounded-full bg-[#14131b] hover:bg-[#201e29] border border-[#2c2938] hover:border-[#d48b4e] text-[#cfc4b2] hover:text-[#fbf8f3] flex items-center justify-center transition-all shadow-lg hover:scale-105 active:scale-95"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => scrollBigCarousel('right')}
-                aria-label="Next carousel artworks"
-                className="w-10 h-10 rounded-full bg-[#14131b] hover:bg-[#201e29] border border-[#2c2938] hover:border-[#d48b4e] text-[#cfc4b2] hover:text-[#fbf8f3] flex items-center justify-center transition-all shadow-lg hover:scale-105 active:scale-95"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
+        {/* Album Summary Sub-bar */}
+        <div className="flex items-center justify-between mb-6 px-1 text-left">
+          <div className="flex items-center gap-2 text-xs text-[#8c8475]">
+            <span className="font-mono">{filteredArtworks.length} {filteredArtworks.length === 1 ? 'Artwork' : 'Artworks'}</span>
+            <span>•</span>
+            <span className="text-[#a9a296]">{selectedCategory}</span>
+            <span>•</span>
+            <span className="text-[11px] text-[#716a5f] hidden sm:inline">Hover/tap photo for details, click to expand gallery</span>
           </div>
+          <span className="text-[11px] uppercase tracking-[0.18em] font-mono text-[#8c8475] hidden md:inline">
+            Direct In-Situ Wall Reliefs
+          </span>
+        </div>
 
-          {/* Big Horizontal Scroll Track */}
-          <div
-            ref={bigCarouselRef}
-            className="flex items-stretch gap-6 overflow-x-auto scroll-smooth pb-4 pt-1 px-1 scrollbar-none"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          >
+        {/* =========================================================================
+            VIEW 1: PHONE GALLERY / WINDOWS ALBUM PHOTO GRID
+            Pure, edge-to-edge photography. NO bulky text cards underneath!
+            Hover or tap shows the image name, category, and details overlay.
+           ========================================================================= */}
+        {viewMode === 'grid' && (
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
             {filteredArtworks.map((artwork, index) => {
-              const isHovered = hoveredArtwork?.id === artwork.id;
-
               return (
                 <div
-                  key={`carousel-${artwork.id}`}
+                  key={`album-${artwork.id}`}
                   onClick={() => setActiveArtworkIndex(index)}
                   onMouseEnter={() => setHoveredArtwork(artwork)}
-                  className="group relative flex-shrink-0 w-[290px] sm:w-[350px] md:w-[390px] aspect-[3/4] rounded-xl overflow-hidden border border-[#25232f] hover:border-[#d48b4e] transition-all duration-500 shadow-2xl bg-[#121117] cursor-pointer select-none"
+                  onMouseLeave={() => setHoveredArtwork(null)}
+                  className="group relative overflow-hidden rounded-xl bg-[#121118] border border-[#22202d] hover:border-[#d48b4e]/80 transition-all duration-500 shadow-xl cursor-pointer select-none aspect-[3/4] sm:aspect-[4/5] md:aspect-[3/4]"
                 >
-                  {/* Artwork Image with Zoom on Hover */}
+                  {/* High Quality Artwork Image */}
                   <img
                     src={artwork.image}
                     alt={artwork.title}
@@ -254,149 +267,180 @@ export default function ArtworkGallery() {
                     loading="lazy"
                   />
 
-                  {/* Gradient Vignettes */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#09090c] via-[#09090c]/40 to-transparent opacity-80 group-hover:opacity-95 transition-opacity duration-300" />
-                  <div className="absolute inset-0 bg-gradient-to-b from-[#09090c]/60 via-transparent to-transparent opacity-60" />
+                  {/* Gentle Ambient Vignette (always subtle, strengthens on hover) */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#060608]/90 via-[#060608]/20 to-transparent opacity-40 group-hover:opacity-85 transition-opacity duration-300 pointer-events-none" />
 
-                  {/* Top Category Badge */}
-                  <div className="absolute top-3.5 left-3.5 z-20">
-                    <span
-                      className="text-[9px] uppercase tracking-[0.2em] font-medium bg-[#0a0a0e]/85 backdrop-blur-md border border-[#2c2a38] px-2.5 py-1 rounded"
-                      style={{ color: theme.accent }}
-                    >
+                  {/* Corner Accent in Gallery Style */}
+                  <div className="absolute top-2.5 right-2.5 z-20 w-7 h-7 rounded-full bg-[#08080c]/75 backdrop-blur-md border border-[#2a2838] group-hover:border-[#d48b4e] text-[#ded3c1] group-hover:text-[#fbf8f3] flex items-center justify-center opacity-75 group-hover:opacity-100 transition-all shadow-md group-hover:scale-110">
+                    <Maximize2 className="w-3.5 h-3.5" />
+                  </div>
+
+                  {/* Static Category Pill (Minimal, top-left) */}
+                  <div className="absolute top-2.5 left-2.5 z-20">
+                    <span className="text-[9px] uppercase tracking-[0.2em] font-medium bg-[#08080c]/80 backdrop-blur-md border border-[#252332] text-[#cfc4b2] px-2 py-0.5 rounded">
                       {artwork.category}
                     </span>
                   </div>
 
-                  {/* Top Right Quick Inspect Indicator */}
-                  <div className="absolute top-3.5 right-3.5 z-20 w-8 h-8 rounded-full bg-[#0a0a0e]/85 backdrop-blur-md border border-[#2c2a38] group-hover:border-[#d48b4e] text-[#b8ad9c] group-hover:text-[#fbf8f3] flex items-center justify-center transition-all">
-                    <Eye className="w-3.5 h-3.5" />
-                  </div>
-
-                  {/* Bottom Hover Content: Prominently Displays Name and Details on Hover */}
-                  <div className="absolute bottom-0 left-0 right-0 p-5 z-20 flex flex-col justify-end text-left transition-all duration-300 transform group-hover:translate-y-0">
-                    {/* Eyebrow index */}
-                    <span className="text-[10px] tracking-[0.2em] uppercase text-[#8c8475] font-mono mb-1 block">
+                  {/* =====================================================================
+                      PHONE GALLERY / WINDOWS ALBUM OVERLAY
+                      Appears smoothly on HOVER or TAP over the image!
+                     ===================================================================== */}
+                  <div className="absolute inset-0 z-20 flex flex-col justify-end p-4 sm:p-5 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 text-left pointer-events-none">
+                    {/* Index Number */}
+                    <span className="text-[9px] tracking-[0.2em] uppercase text-[#9e968a] font-mono mb-1 block">
                       NO. {String(index + 1).padStart(2, '0')}
                     </span>
 
-                    {/* Prominent Artwork Name displayed clearly on hover */}
-                    <h4 className="font-display text-lg sm:text-xl font-medium text-[#fbf8f3] group-hover:text-[#f2bc88] transition-colors line-clamp-2 leading-snug mb-1.5 drop-shadow-md">
+                    {/* Artwork Name displayed prominently */}
+                    <h3 className="font-display text-base sm:text-lg font-medium text-[#fbf8f3] group-hover:text-[#f2bc88] transition-colors line-clamp-2 leading-snug mb-1 drop-shadow-md">
                       {artwork.title}
-                    </h4>
+                    </h3>
 
                     {/* Medium & Dimensions */}
-                    <p className="text-[11px] sm:text-xs text-[#cfc4b2] font-editorial leading-relaxed line-clamp-1 mb-3">
-                      {artwork.medium} • {artwork.dimensions}
+                    <p className="text-[11px] text-[#ded3c1] font-editorial line-clamp-1 mb-2.5">
+                      {artwork.medium} {artwork.dimensions ? `• ${artwork.dimensions}` : ''}
                     </p>
 
-                    {/* Action Button that appears / highlights on hover */}
-                    <div className="flex items-center justify-between pt-2.5 border-t border-[#292736]/70">
-                      <span className="text-[10px] uppercase tracking-[0.2em] font-medium text-[#d48b4e] group-hover:underline inline-flex items-center gap-1.5">
-                        <span>OPEN FULL VIEW</span>
-                        <ArrowUpRight className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                    {/* Open Action Strip */}
+                    <div className="flex items-center justify-between pt-2 border-t border-[#2d2a3c]/80 text-[10px] uppercase tracking-[0.16em] font-medium text-[#d48b4e]">
+                      <span className="inline-flex items-center gap-1">
+                        <span>OPEN ALBUM VIEW</span>
+                        <ArrowUpRight className="w-3 h-3 transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                       </span>
-                      <span className="text-[10px] text-[#716a5f]">Click to expand</span>
+                      <span className="text-[9px] text-[#8c8475] font-mono">Full Details</span>
                     </div>
                   </div>
 
-                  {/* Corner Accents on Card */}
-                  <div className="absolute top-3 left-3 w-3 h-3 border-t border-l border-[#d48b4e]/30 pointer-events-none group-hover:border-[#d48b4e] transition-colors z-20" />
-                  <div className="absolute top-3 right-3 w-3 h-3 border-t border-r border-[#d48b4e]/30 pointer-events-none group-hover:border-[#d48b4e] transition-colors z-20" />
-                  <div className="absolute bottom-3 left-3 w-3 h-3 border-b border-l border-[#d48b4e]/30 pointer-events-none group-hover:border-[#d48b4e] transition-colors z-20" />
-                  <div className="absolute bottom-3 right-3 w-3 h-3 border-b border-r border-[#d48b4e]/30 pointer-events-none group-hover:border-[#d48b4e] transition-colors z-20" />
+                  {/* Subtle Frame Highlight */}
+                  <div className="absolute inset-0 border border-white/5 group-hover:border-[#d48b4e]/40 rounded-xl pointer-events-none transition-colors" />
                 </div>
               );
             })}
           </div>
-        </div>
+        )}
 
-        {/* Section Divider & Header for the Complete Grid below the Carousel */}
-        <div className="flex items-center justify-between mb-8 pt-8 border-t border-[#1d1b26] text-left">
-          <div className="flex items-center gap-2.5">
-            <LayoutGrid className="w-4 h-4" style={{ color: theme.accent }} />
-            <h3 className="font-display text-xl sm:text-2xl text-[#fbf8f3] tracking-wide font-normal">
-              Complete Portfolio Grid
-            </h3>
-          </div>
-          <span className="text-xs uppercase tracking-[0.2em] text-[#8c8475]">
-            {filteredArtworks.length} {filteredArtworks.length === 1 ? 'Installation' : 'Installations'}
-          </span>
-        </div>
+        {/* =========================================================================
+            VIEW 2: SPOTLIGHT SHOWCASE REEL
+            Horizontal sliding album carousel with the same hover overlay styling!
+           ========================================================================= */}
+        {viewMode === 'spotlight' && (
+          <div
+            className="text-left"
+            onMouseEnter={() => setCarouselIsHovered(true)}
+            onMouseLeave={() => {
+              setCarouselIsHovered(false);
+              setHoveredArtwork(null);
+            }}
+          >
+            {/* Top Reel Navigation Bar */}
+            <div className="flex items-center justify-between mb-4 px-1">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full animate-ping" style={{ backgroundColor: theme.accent }} />
+                <span className="text-[11px] uppercase tracking-[0.2em] text-[#a9a296] font-medium">
+                  {hoveredArtwork ? hoveredArtwork.title : 'Sliding Album Reel • Hover any photo to reveal details'}
+                </span>
+              </div>
 
-        {/* Asymmetrical Editorial Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredArtworks.map((artwork, index) => {
-            const isLarge = index === 0;
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => scrollBigCarousel('left')}
+                  aria-label="Previous carousel artworks"
+                  className="w-9 h-9 rounded-full bg-[#131219] hover:bg-[#1f1d28] border border-[#282635] hover:border-[#d48b4e] text-[#ded3c1] hover:text-[#fbf8f3] flex items-center justify-center transition-all shadow-lg hover:scale-105 active:scale-95"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollBigCarousel('right')}
+                  aria-label="Next carousel artworks"
+                  className="w-9 h-9 rounded-full bg-[#131219] hover:bg-[#1f1d28] border border-[#282635] hover:border-[#d48b4e] text-[#ded3c1] hover:text-[#fbf8f3] flex items-center justify-center transition-all shadow-lg hover:scale-105 active:scale-95"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
 
-            return (
-              <div
-                key={artwork.id}
-                onClick={() => setActiveArtworkIndex(index)}
-                className={`group relative cursor-pointer overflow-hidden rounded-lg bg-[#121117] border border-[#23212c] hover:border-[#d48b4e]/70 transition-all duration-500 shadow-xl flex flex-col justify-between ${
-                  isLarge ? 'md:col-span-2 lg:col-span-2' : ''
-                }`}
-              >
-                {/* Image Container with Zoom Effect */}
-                <div className={`relative overflow-hidden w-full ${isLarge ? 'aspect-[16/10] sm:aspect-[16/9]' : 'aspect-[4/3] sm:aspect-[4/3]'}`}>
+            {/* Horizontal Track with Hover-Only Overlay */}
+            <div
+              ref={bigCarouselRef}
+              className="flex items-stretch gap-5 overflow-x-auto scroll-smooth pb-4 pt-1 px-1 scrollbar-none"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {filteredArtworks.map((artwork, index) => (
+                <div
+                  key={`spotlight-${artwork.id}`}
+                  onClick={() => setActiveArtworkIndex(index)}
+                  onMouseEnter={() => setHoveredArtwork(artwork)}
+                  className="group relative flex-shrink-0 w-[280px] sm:w-[340px] md:w-[380px] aspect-[3/4] rounded-xl overflow-hidden border border-[#23212d] hover:border-[#d48b4e] transition-all duration-500 shadow-2xl bg-[#121118] cursor-pointer select-none"
+                >
                   <img
                     src={artwork.image}
                     alt={artwork.title}
-                    className="w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-700 ease-out"
+                    className="w-full h-full object-cover object-center transform group-hover:scale-106 transition-transform duration-700 ease-out"
                     loading="lazy"
                   />
 
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0d] via-transparent to-transparent opacity-80 group-hover:opacity-60 transition-opacity" />
+                  {/* Gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#060608]/95 via-[#060608]/30 to-transparent opacity-40 group-hover:opacity-90 transition-opacity duration-300 pointer-events-none" />
 
-                  {/* Floating View Icon */}
-                  <div className="absolute top-4 right-4 w-9 h-9 rounded-full bg-[#0a0a0d]/80 backdrop-blur-md border border-[#302e3b] flex items-center justify-center text-[#ded3c1] group-hover:text-[#d48b4e] group-hover:border-[#d48b4e] transition-all">
-                    <ArrowUpRight className="w-4 h-4 transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                  </div>
-
-                  {/* Category Pill */}
-                  <div className="absolute top-4 left-4">
-                    <span className="text-[10px] uppercase tracking-[0.2em] font-medium bg-[#0a0a0d]/80 backdrop-blur-md border border-[#2b2836] text-[#ded3c1] px-2.5 py-1 rounded">
+                  {/* Top Category Badge */}
+                  <div className="absolute top-3 left-3 z-20">
+                    <span
+                      className="text-[9px] uppercase tracking-[0.2em] font-medium bg-[#0a0a0e]/85 backdrop-blur-md border border-[#2b2938] px-2.5 py-1 rounded"
+                      style={{ color: theme.accent }}
+                    >
                       {artwork.category}
                     </span>
                   </div>
-                </div>
 
-                {/* Caption Bar */}
-                <div className="p-6 bg-[#100f15] flex flex-col justify-between flex-grow text-left">
-                  <div>
-                    <h3 className="font-display text-lg md:text-xl font-normal text-[#fbf8f3] group-hover:text-[#d48b4e] transition-colors mb-2">
-                      {artwork.title}
-                    </h3>
-                    <p className="font-editorial text-sm text-[#a9a296] line-clamp-2 leading-relaxed">
-                      {artwork.description}
-                    </p>
+                  {/* Inspect Icon */}
+                  <div className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-[#0a0a0e]/85 backdrop-blur-md border border-[#2b2938] group-hover:border-[#d48b4e] text-[#b8ad9c] group-hover:text-[#fbf8f3] flex items-center justify-center transition-all">
+                    <Maximize2 className="w-3.5 h-3.5" />
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-[#1d1b26] flex items-center justify-between text-[11px] text-[#8c8475]">
-                    <span>{artwork.dimensions || "Custom Commission"}</span>
-                    <span
-                      style={{ color: theme.accent }}
-                      className="group-hover:underline inline-flex items-center gap-1 font-medium"
-                    >
-                      Inspect Art <Eye className="w-3.5 h-3.5" />
+                  {/* Details Overlay on Hover */}
+                  <div className="absolute inset-0 z-20 flex flex-col justify-end p-5 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 text-left pointer-events-none">
+                    <span className="text-[10px] tracking-[0.2em] uppercase text-[#8c8475] font-mono mb-1 block">
+                      NO. {String(index + 1).padStart(2, '0')}
                     </span>
+                    <h4 className="font-display text-lg sm:text-xl font-medium text-[#fbf8f3] group-hover:text-[#f2bc88] transition-colors line-clamp-2 leading-snug mb-1.5 drop-shadow-md">
+                      {artwork.title}
+                    </h4>
+                    <p className="text-xs text-[#cfc4b2] font-editorial leading-relaxed line-clamp-2 mb-3">
+                      {artwork.medium} • {artwork.dimensions}
+                    </p>
+                    <div className="flex items-center justify-between pt-2.5 border-t border-[#292736]/70 text-[10px] uppercase tracking-[0.2em] font-medium text-[#d48b4e]">
+                      <span className="inline-flex items-center gap-1.5">
+                        <span>OPEN FULL VIEW</span>
+                        <ArrowUpRight className="w-3.5 h-3.5" />
+                      </span>
+                      <span className="text-[10px] text-[#716a5f]">Click to expand</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              ))}
+            </div>
+          </div>
+        )}
 
+        {/* Empty state */}
         {filteredArtworks.length === 0 && (
           <div className="py-20 text-center text-[#8c8475]">
-            <p className="font-editorial text-lg">No artworks in this category currently displayed.</p>
+            <p className="font-editorial text-lg">No artworks found in this album category.</p>
           </div>
         )}
       </div>
 
-      {/* Lightbox Modal */}
+      {/* =========================================================================
+          Phone Gallery & Windows Photos Lightbox Modal Viewer
+         ========================================================================= */}
       <ProjectLightbox
         artwork={activeArtwork}
+        allArtworks={filteredArtworks}
+        currentIndex={activeArtworkIndex}
+        onSelectIndex={(index) => setActiveArtworkIndex(index)}
         onClose={() => setActiveArtworkIndex(null)}
         onPrev={handlePrev}
         onNext={handleNext}
