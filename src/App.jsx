@@ -5,10 +5,7 @@ import IntroSplash from './components/IntroSplash';
 import Navigation from './components/Navigation';
 import HeroSection from './components/HeroSection';
 import ArtworkGallery from './components/ArtworkGallery';
-import SignatureProject from './components/SignatureProject';
-import CraftsmanshipSection from './components/CraftsmanshipSection';
 import AboutArtist from './components/AboutArtist';
-import ContactSection from './components/ContactSection';
 import Footer from './components/Footer';
 import WhatsAppFloatingButton from './components/WhatsAppFloatingButton';
 import PaletteSwitcher from './components/PaletteSwitcher';
@@ -30,14 +27,11 @@ function AppContent() {
       {/* Main Website Navigation */}
       <Navigation />
       
-      {/* Main Editorial Showcase Sections */}
+      {/* Main Editorial Showcase Sections: Hero, Artworks, Artist, Footer */}
       <main className="flex-grow">
         <HeroSection />
-        <SignatureProject />
         <ArtworkGallery />
-        <CraftsmanshipSection />
         <AboutArtist />
-        <ContactSection />
       </main>
 
       {/* Luxury Atelier Footer */}

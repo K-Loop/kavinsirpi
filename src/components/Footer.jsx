@@ -54,10 +54,7 @@ export default function Footer() {
                 <a href="#artworks" className="hover:text-[#fbf8f3] transition-colors">Temple & Sacred Art</a>
               </li>
               <li>
-                <a href="#signature-project" className="hover:text-[#fbf8f3] transition-colors">Wall Transformation</a>
-              </li>
-              <li>
-                <a href="#craftsmanship" className="hover:text-[#fbf8f3] transition-colors">The 4-Step Process</a>
+                <a href="#artist" className="hover:text-[#fbf8f3] transition-colors">The Artist & Atelier</a>
               </li>
             </ul>
           </div>

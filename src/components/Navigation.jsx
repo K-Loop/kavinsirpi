@@ -21,11 +21,9 @@ export default function Navigation() {
   }, []);
 
   const navLinks = [
-    { name: 'Transformation', href: '#signature-project' },
     { name: 'Artworks', href: '#artworks' },
-    { name: 'Process', href: '#craftsmanship' },
     { name: 'The Artist', href: '#artist' },
-    { name: 'Commission', href: '#contact' },
+    { name: 'Contact', href: '#contact-direct' },
   ];
 
   return (

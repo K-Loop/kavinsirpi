@@ -118,20 +118,20 @@ export default function HeroSection() {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 mb-8 sm:mb-10">
             {/* Primary CTA */}
             <a
-              href="#signature-project"
+              href="#artworks"
               style={{ backgroundColor: theme.accent }}
               className="inline-flex items-center justify-center gap-2 hover:brightness-110 text-[#0b0b0e] font-semibold text-xs tracking-[0.2em] uppercase px-7 py-4 rounded-full transition-all duration-300 shadow-xl"
             >
-              <span>SEE TRANSFORMATION</span>
+              <span>EXPLORE ARTWORKS</span>
               <ChevronRight className="w-4 h-4" />
             </a>
 
             {/* Secondary CTA */}
             <a
-              href="#contact"
+              href="#artist"
               className="inline-flex items-center justify-center gap-2 border border-[#302e3b] hover:border-[#d48b4e] text-[#eee7dc] hover:text-[#fbf8f3] font-medium text-xs tracking-[0.2em] uppercase px-7 py-4 rounded-full transition-all duration-300 bg-[#141318]/60 hover:bg-[#1a1922]"
             >
-              <span>COMMISSION A SCULPTURE</span>
+              <span>THE ARTIST</span>
             </a>
           </div>
 

@@ -93,14 +93,14 @@ export default function ArtworkGallery() {
               className="text-[11px] uppercase tracking-[0.25em] font-medium"
               style={{ color: theme.accent }}
             >
-              ARCHITECTURAL ALBUMS
+              PORTFOLIO SHOWCASE
             </span>
           </div>
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-normal text-[#fbf8f3] tracking-wide mb-3">
             Masterworks of Cement Relief
           </h2>
           <p className="font-editorial text-base sm:text-lg text-[#b8ad9c] leading-relaxed">
-            Hand-carved directly into high-grade cement mortar in-situ. Tap or hover any artwork to reveal its details, or click to open the full Windows Photos & phone gallery album viewer.
+            Hand-carved directly into high-grade cement mortar in-situ. Click any artwork to view in full.
           </p>
         </div>
 
