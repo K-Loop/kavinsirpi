@@ -42,6 +42,8 @@ const router = express.Router();
 /**
  * Helper: Check if MongoDB connection is open
  */
+import { autoSeedArtworksAndPhotos } from '../services/seedService.js';
+
 const isMongoReady = () => mongoose.connection.readyState === 1;
 
 /**
@@ -51,17 +53,15 @@ const isMongoReady = () => mongoose.connection.readyState === 1;
 router.get('/', async (req, res) => {
   try {
     if (isMongoReady()) {
-      const dbArtworks = await Artwork.find().sort({ createdAt: -1 });
+      let dbArtworks = await Artwork.find().sort({ createdAt: -1 });
+      // If DB is empty or missing items, trigger autoSeed
+      if (dbArtworks.length < DEFAULT_ARTWORKS.length) {
+        console.log(`[Artworks] DB has ${dbArtworks.length}/${DEFAULT_ARTWORKS.length} artworks. Auto-seeding missing items...`);
+        await autoSeedArtworksAndPhotos();
+        dbArtworks = await Artwork.find().sort({ createdAt: -1 });
+      }
       if (dbArtworks.length > 0) {
         return res.json({ success: true, artworks: dbArtworks });
-      }
-      // If DB is empty, seed with initial portfolio
-      try {
-        await Artwork.insertMany(DEFAULT_ARTWORKS);
-        const seeded = await Artwork.find().sort({ createdAt: -1 });
-        return res.json({ success: true, artworks: seeded });
-      } catch (seedErr) {
-        // Fallback to defaults
       }
     }
     const fallbackList = getFallbackData();
@@ -69,6 +69,24 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Error fetching artworks:', error);
     res.json({ success: true, artworks: getFallbackData() });
+  }
+});
+
+/**
+ * POST /api/artworks/seed
+ * Auto-seeds all 38 artworks and compresses photos to WebP
+ */
+router.post('/seed', async (req, res) => {
+  try {
+    const seeded = await autoSeedArtworksAndPhotos();
+    res.json({
+      success: true,
+      count: seeded.length,
+      message: `Successfully seeded and processed ${seeded.length} artworks & WebP photos`,
+      artworks: seeded,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
@@ -291,13 +309,12 @@ router.post('/reset', authMiddleware, async (req, res) => {
   try {
     if (isMongoReady()) {
       await Artwork.deleteMany({});
-      await Artwork.insertMany(DEFAULT_ARTWORKS);
     }
-    saveFallbackData([...DEFAULT_ARTWORKS]);
+    const seeded = await autoSeedArtworksAndPhotos();
     res.json({
       success: true,
-      artworks: DEFAULT_ARTWORKS,
-      message: 'Portfolio restored to default collection',
+      artworks: seeded,
+      message: 'Portfolio restored to full default collection with WebP photos',
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

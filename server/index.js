@@ -133,6 +133,8 @@ const seedAdminUser = async () => {
   }
 };
 
+import { autoSeedArtworksAndPhotos } from './services/seedService.js';
+
 // Database Connection with graceful fallback and Google DNS resolution
 const connectMongo = async () => {
   const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/kavinsirpi';
@@ -144,10 +146,12 @@ const connectMongo = async () => {
     });
     console.log('MongoDB connected successfully!');
     await seedAdminUser();
+    await autoSeedArtworksAndPhotos();
   } catch (error) {
     console.warn(
       `MongoDB connection note: ${error.message}. Running with robust fallback data store. (Will auto-connect once MongoDB is started).`
     );
+    await autoSeedArtworksAndPhotos();
   }
 };
 

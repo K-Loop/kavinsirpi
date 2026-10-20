@@ -188,6 +188,15 @@ export default function HeroSection() {
                       isCurrent && isHovered ? 'scale-103' : 'scale-100'
                     }`}
                     loading={idx === 0 ? 'eager' : 'lazy'}
+                    onError={(e) => {
+                      if (!e.currentTarget.dataset.triedFallback) {
+                        e.currentTarget.dataset.triedFallback = 'true';
+                        if (art.image && art.image.includes('/uploads/')) {
+                          const base = art.image.split('/uploads/').pop().replace(/\.webp$/, '.jpeg');
+                          e.currentTarget.src = `/images/crafts/${base}`;
+                        }
+                      }
+                    }}
                   />
                 </div>
               );

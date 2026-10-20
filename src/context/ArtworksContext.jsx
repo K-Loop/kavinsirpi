@@ -3,8 +3,8 @@ import { ARTWORKS_DATA, ARTWORK_CATEGORIES } from '../data/artworksData';
 
 const ArtworksContext = createContext();
 
-const STORAGE_KEY_ARTWORKS = 'kavin_sirpi_artworks_custom_v1';
-const STORAGE_KEY_CATEGORIES = 'kavin_sirpi_categories_custom_v1';
+const STORAGE_KEY_ARTWORKS = 'kavin_sirpi_artworks_custom_v2';
+const STORAGE_KEY_CATEGORIES = 'kavin_sirpi_categories_custom_v2';
 const STORAGE_KEY_AUTH = 'kavin_sirpi_admin_jwt_v1';
 const STORAGE_KEY_USER = 'kavin_sirpi_admin_user_v1';
 
@@ -19,7 +19,7 @@ export function ArtworksProvider({ children }) {
       const saved = localStorage.getItem(STORAGE_KEY_ARTWORKS);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length >= ARTWORKS_DATA.length) return parsed;
       }
     } catch (e) {
       console.warn('Could not read artworks from cache:', e);
@@ -33,7 +33,7 @@ export function ArtworksProvider({ children }) {
       const saved = localStorage.getItem(STORAGE_KEY_CATEGORIES);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length >= ARTWORK_CATEGORIES.length) return parsed;
       }
     } catch (e) {
       console.warn('Could not read categories from cache:', e);

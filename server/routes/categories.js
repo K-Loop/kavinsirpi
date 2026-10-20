@@ -17,8 +17,8 @@ router.get('/', async (req, res) => {
       const dbCategories = await Category.find().sort({ order: 1, createdAt: 1 });
       if (dbCategories.length > 0) {
         const names = dbCategories.map(c => c.name);
-        // Ensure "All Works" is first
-        const allNames = Array.from(new Set(['All Works', ...names]));
+        // Ensure default categories and order are preserved
+        const allNames = Array.from(new Set(['All Works', ...DEFAULT_CATEGORIES.filter(c => c !== 'All Works'), ...names]));
         return res.json({ success: true, categories: allNames });
       }
       // Seed default categories

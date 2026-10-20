@@ -143,6 +143,15 @@ export default function ProjectLightbox({
             src={artwork.image}
             alt={artwork.title}
             className="max-h-[72vh] sm:max-h-[76vh] w-auto max-w-full object-contain rounded-xl shadow-2xl border border-[#22202c]"
+            onError={(e) => {
+              if (!e.currentTarget.dataset.triedFallback) {
+                e.currentTarget.dataset.triedFallback = 'true';
+                if (artwork.image && artwork.image.includes('/uploads/')) {
+                  const base = artwork.image.split('/uploads/').pop().replace(/\.webp$/, '.jpeg');
+                  e.currentTarget.src = `/images/crafts/${base}`;
+                }
+              }
+            }}
           />
         </div>
       </main>

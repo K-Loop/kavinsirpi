@@ -946,6 +946,15 @@ export default function AdminPortal() {
                           src={art.image}
                           alt={art.title}
                           className="w-full h-full object-cover group-hover/thumb:scale-110 transition-transform duration-300"
+                          onError={(e) => {
+                            if (!e.currentTarget.dataset.triedFallback) {
+                              e.currentTarget.dataset.triedFallback = 'true';
+                              if (art.image && art.image.includes('/uploads/')) {
+                                const base = art.image.split('/uploads/').pop().replace(/\.webp$/, '.jpeg');
+                                e.currentTarget.src = `/images/crafts/${base}`;
+                              }
+                            }
+                          }}
                         />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/thumb:opacity-100 flex items-center justify-center transition-opacity">
                           <Eye className="w-4 h-4 text-[#f2bc88]" />

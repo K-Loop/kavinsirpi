@@ -265,6 +265,15 @@ export default function ArtworkGallery() {
                     alt={artwork.title}
                     className="w-full h-full object-cover object-center transform group-hover:scale-106 transition-transform duration-700 ease-out"
                     loading="lazy"
+                    onError={(e) => {
+                      if (!e.currentTarget.dataset.triedFallback) {
+                        e.currentTarget.dataset.triedFallback = 'true';
+                        if (artwork.image && artwork.image.includes('/uploads/')) {
+                          const base = artwork.image.split('/uploads/').pop().replace(/\.webp$/, '.jpeg');
+                          e.currentTarget.src = `/images/crafts/${base}`;
+                        }
+                      }
+                    }}
                   />
 
                   {/* Gentle Ambient Vignette (always subtle, strengthens on hover) */}
@@ -380,6 +389,15 @@ export default function ArtworkGallery() {
                     alt={artwork.title}
                     className="w-full h-full object-cover object-center transform group-hover:scale-106 transition-transform duration-700 ease-out"
                     loading="lazy"
+                    onError={(e) => {
+                      if (!e.currentTarget.dataset.triedFallback) {
+                        e.currentTarget.dataset.triedFallback = 'true';
+                        if (artwork.image && artwork.image.includes('/uploads/')) {
+                          const base = artwork.image.split('/uploads/').pop().replace(/\.webp$/, '.jpeg');
+                          e.currentTarget.src = `/images/crafts/${base}`;
+                        }
+                      }
+                    }}
                   />
 
                   {/* Gradient overlay */}
