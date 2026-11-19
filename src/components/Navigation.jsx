@@ -36,9 +36,8 @@ export default function Navigation() {
   }, []);
 
   const navLinks = [
-    { name: 'Gallery', href: '#gallery-showcase' },
-    { name: 'Overview', href: '#hero' },
-    { name: 'All Artworks', href: '#artworks' },
+    { name: 'Gallery', href: '#artworks' },
+    { name: 'Atelier Hero', href: '#hero' },
     { name: 'The Artist', href: '#artist' },
     { name: 'Contact', href: '#contact-direct' },
   ];

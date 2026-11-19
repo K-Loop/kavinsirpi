@@ -3,7 +3,6 @@ import { ThemeProvider } from './context/ThemeContext';
 import { ArtworksProvider, useArtworks } from './context/ArtworksContext';
 import IntroSplash from './components/IntroSplash';
 import Navigation from './components/Navigation';
-import FirstLoadGallery from './components/FirstLoadGallery';
 import HeroSection from './components/HeroSection';
 import ArtworkGallery from './components/ArtworkGallery';
 import AboutArtist from './components/AboutArtist';
@@ -14,13 +13,11 @@ import AdminPortal from './components/admin/AdminPortal';
 
 function AppContent() {
   const { isAdminView } = useArtworks();
-  // Always read fresh from sessionStorage so returning from admin doesn't show stuck intro
   const [introDismissed, setIntroDismissed] = useState(true);
 
   // When switching back from admin view to main site, always skip intro
   useEffect(() => {
     if (!isAdminView) {
-      // Intro already dismissed for this session (or admin sets it), always skip
       setIntroDismissed(true);
     }
   }, [isAdminView]);
@@ -41,28 +38,25 @@ function AppContent() {
         />
       )}
 
-      {/* Main Website Navigation (Glass Navbar, hides when scrolling down) */}
+      {/* Main Website Navigation (Frosted Glass, hides on scroll down) */}
       <Navigation />
       
       {/* Main Editorial Showcase Sections */}
       <main className="flex-grow">
-        {/* 1. First-loading gallery displaying multiple photos to highlight rich collection */}
-        <FirstLoadGallery />
-
-        {/* 2. Hero Section revealed as user scrolls down */}
+        {/* 1. Hero Section (At top of page - accessible by scrolling UP) */}
         <HeroSection />
 
-        {/* 3. Full interactive Artwork Gallery with albums and filters */}
+        {/* 2. Interactive Swipeable Artwork Gallery (Primary destination on open) */}
         <ArtworkGallery />
 
-        {/* 4. The Master Sculptor About Section */}
+        {/* 3. The Master Sculptor About Section */}
         <AboutArtist />
       </main>
 
       {/* Luxury Atelier Footer */}
       <Footer />
 
-      {/* Interactive Studio Palette Switcher (allows live preview of different palettes) */}
+      {/* Interactive Studio Palette Switcher */}
       <PaletteSwitcher />
 
       {/* Floating WhatsApp Action Button */}

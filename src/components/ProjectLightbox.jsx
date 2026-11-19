@@ -7,6 +7,7 @@ export default function ProjectLightbox({
   artwork,
   allArtworks = [],
   currentIndex = 0,
+  onSelectIndex,
   onClose,
   onPrev,
   onNext,
@@ -15,6 +16,7 @@ export default function ProjectLightbox({
 }) {
   const { theme } = useTheme();
   const touchStartX = useRef(null);
+  const thumbRefs = useRef([]);
 
   const handleClose = useCallback(() => {
     document.body.style.overflow = '';
@@ -45,6 +47,19 @@ export default function ProjectLightbox({
     };
   }, [artwork, handleClose, onPrev, onNext, hasPrev, hasNext]);
 
+  // Smoothly auto-center the active thumbnail in the bottom WhatsApp-style strip
+  useEffect(() => {
+    if (!artwork || currentIndex === null || currentIndex === undefined) return;
+    const activeThumb = thumbRefs.current[currentIndex];
+    if (activeThumb && typeof activeThumb.scrollIntoView === 'function') {
+      activeThumb.scrollIntoView({
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest'
+      });
+    }
+  }, [artwork, currentIndex]);
+
   // Touch swipe for effortless mobile navigation
   const handleTouchStart = (e) => {
     touchStartX.current = e.touches[0].clientX;
@@ -74,41 +89,44 @@ export default function ProjectLightbox({
       role="dialog"
       aria-modal="true"
       aria-label={artwork.title}
-      className="fixed inset-0 z-50 flex flex-col justify-between bg-[#050507]/95 backdrop-blur-xl text-[#eee7dc] select-none animate-fade-in"
+      className="fixed inset-0 z-50 flex flex-col justify-between bg-[#050507]/98 backdrop-blur-xl text-[#eee7dc] select-none animate-fade-in"
       onClick={handleClose}
     >
-      {/* Dialogue Top Header: Counter, Title, and Close Button */}
+      {/* Top Header: Counter, Category, Title, and Close Button */}
       <header
         onClick={(e) => e.stopPropagation()}
-        className="relative z-40 flex items-center justify-between px-4 sm:px-6 py-3.5 bg-[#0a0a0e]/90 border-b border-[#1c1a26]"
+        className="relative z-40 flex items-center justify-between px-4 sm:px-6 py-3 bg-[#0a0a0e]/95 border-b border-[#1c1a26] flex-shrink-0"
       >
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-mono text-[#8c8475] bg-[#14131b] px-2.5 py-1 rounded-md border border-[#262433]">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <span className="text-xs font-mono text-[#8c8475] bg-[#14131b] px-2.5 py-1 rounded-md border border-[#262433] flex-shrink-0">
             {currentNum} / {totalCount}
           </span>
-          <span className="text-xs uppercase tracking-wider font-medium text-[#d48b4e]">
+          <span
+            className="text-[11px] sm:text-xs uppercase tracking-wider font-medium truncate"
+            style={{ color: theme.accent }}
+          >
             {artwork.category}
           </span>
         </div>
 
-        <h2 className="font-display text-sm sm:text-base font-normal text-[#fbf8f3] tracking-wide truncate max-w-[200px] sm:max-w-md text-center">
+        <h2 className="hidden md:block font-display text-sm sm:text-base font-normal text-[#fbf8f3] tracking-wide truncate max-w-md text-center px-4">
           {artwork.title}
         </h2>
 
         <button
           type="button"
           onClick={handleClose}
-          className="w-9 h-9 rounded-full bg-[#16151f] hover:bg-[#252230] border border-[#2b2838] hover:border-[#d48b4e] flex items-center justify-center text-[#ded3c1] hover:text-[#fbf8f3] transition-all"
-          title="Close (Esc)"
-          aria-label="Close dialogue"
+          className="w-9 h-9 rounded-full bg-[#16151f] hover:bg-[#252230] border border-[#2b2838] hover:border-[#d48b4e] flex items-center justify-center text-[#ded3c1] hover:text-[#fbf8f3] transition-all flex-shrink-0"
+          title="Close Gallery (Esc)"
+          aria-label="Close gallery"
         >
           <X className="w-4 h-4" />
         </button>
       </header>
 
-      {/* Dialogue Main Stage: Full Focused Artwork View */}
+      {/* Main Stage: Full Focused Artwork View */}
       <main
-        className="relative flex-grow flex items-center justify-center p-4 sm:p-8 overflow-hidden"
+        className="relative flex-grow min-h-0 flex items-center justify-center px-3 py-3 sm:px-8 sm:py-4 overflow-hidden"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onClick={(e) => e.stopPropagation()}
@@ -118,10 +136,10 @@ export default function ProjectLightbox({
           <button
             type="button"
             onClick={onPrev}
-            className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-40 w-11 h-11 rounded-full bg-[#121118]/85 hover:bg-[#1f1d2a] border border-[#2b2938] hover:border-[#d48b4e] text-[#ded3c1] hover:text-[#fbf8f3] flex items-center justify-center transition-all shadow-2xl backdrop-blur-md"
+            className="absolute left-2.5 sm:left-6 top-1/2 -translate-y-1/2 z-40 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#121118]/85 hover:bg-[#1f1d2a] border border-[#2b2938] hover:border-[#d48b4e] text-[#ded3c1] hover:text-[#fbf8f3] flex items-center justify-center transition-all shadow-2xl backdrop-blur-md"
             aria-label="Previous artwork"
           >
-            <ChevronLeft className="w-6 h-6" />
+            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         )}
 
@@ -130,19 +148,19 @@ export default function ProjectLightbox({
           <button
             type="button"
             onClick={onNext}
-            className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-40 w-11 h-11 rounded-full bg-[#121118]/85 hover:bg-[#1f1d2a] border border-[#2b2938] hover:border-[#d48b4e] text-[#ded3c1] hover:text-[#fbf8f3] flex items-center justify-center transition-all shadow-2xl backdrop-blur-md"
+            className="absolute right-2.5 sm:right-6 top-1/2 -translate-y-1/2 z-40 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#121118]/85 hover:bg-[#1f1d2a] border border-[#2b2938] hover:border-[#d48b4e] text-[#ded3c1] hover:text-[#fbf8f3] flex items-center justify-center transition-all shadow-2xl backdrop-blur-md"
             aria-label="Next artwork"
           >
-            <ChevronRight className="w-6 h-6" />
+            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         )}
 
         {/* Center Artwork Image */}
-        <div className="relative max-h-full max-w-full flex items-center justify-center">
+        <div className="relative h-full w-full flex items-center justify-center">
           <img
             src={artwork.image}
             alt={artwork.title}
-            className="max-h-[72vh] sm:max-h-[76vh] w-auto max-w-full object-contain rounded-xl shadow-2xl border border-[#22202c]"
+            className="max-h-full max-w-full w-auto h-auto object-contain rounded-xl shadow-2xl border border-[#22202c]"
             onError={(e) => {
               if (!e.currentTarget.dataset.triedFallback) {
                 e.currentTarget.dataset.triedFallback = 'true';
@@ -156,32 +174,97 @@ export default function ProjectLightbox({
         </div>
       </main>
 
-      {/* Dialogue Bottom Action Bar: Artwork Info & Straightforward WhatsApp Enquiry */}
+      {/* Bottom Area: Info + WhatsApp CTA + WhatsApp-Style Horizontal Thumbnail Strip */}
       <footer
         onClick={(e) => e.stopPropagation()}
-        className="relative z-40 px-4 sm:px-6 py-3.5 bg-[#0a0a0e]/95 border-t border-[#1c1a26]"
+        className="relative z-40 bg-[#0a0a0e]/95 border-t border-[#1c1a26] flex-shrink-0"
       >
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
-          <div>
-            <p className="font-display text-base sm:text-lg text-[#fbf8f3]">
-              {artwork.title}
-            </p>
-            <p className="text-xs text-[#a89f90]">
-              {artwork.dimensions ? `${artwork.dimensions} • ` : ''}Handcrafted In-Situ Cement Relief
-            </p>
-          </div>
+        {/* Artwork Info & WhatsApp Enquiry Row */}
+        <div className="px-4 sm:px-6 pt-3 pb-2.5">
+          <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5 text-center sm:text-left">
+            <div className="min-w-0">
+              <p className="font-display text-sm sm:text-base md:text-lg text-[#fbf8f3] truncate">
+                {artwork.title}
+              </p>
+              <p className="text-[11px] sm:text-xs text-[#a89f90] truncate">
+                {artwork.dimensions ? `${artwork.dimensions} • ` : ''}Handcrafted In-Situ Cement Relief
+              </p>
+            </div>
 
-          <a
-            href={getWhatsAppUrl(customEnquiryMessage)}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ backgroundColor: theme.accent }}
-            className="inline-flex items-center justify-center gap-2 hover:brightness-110 text-[#0b0b0e] font-semibold text-xs tracking-[0.16em] uppercase px-6 py-2.5 rounded-full transition-all shadow-md"
-          >
-            <MessageCircle className="w-4 h-4 fill-[#0b0b0e]" />
-            <span>Enquire on WhatsApp</span>
-          </a>
+            <a
+              href={getWhatsAppUrl(customEnquiryMessage)}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ backgroundColor: theme.accent }}
+              className="inline-flex items-center justify-center gap-2 hover:brightness-110 text-[#0b0b0e] font-semibold text-[11px] sm:text-xs tracking-[0.16em] uppercase px-5 py-2 sm:px-6 sm:py-2.5 rounded-full transition-all shadow-md flex-shrink-0"
+            >
+              <MessageCircle className="w-4 h-4 fill-[#0b0b0e]" />
+              <span>Enquire on WhatsApp</span>
+            </a>
+          </div>
         </div>
+
+        {/* WhatsApp-Style Horizontal Album Thumbnail Filmstrip */}
+        {allArtworks.length > 1 && (
+          <div className="border-t border-[#1a1824] bg-[#07070a]/95 px-3 sm:px-6 py-2.5">
+            <div
+              className="flex items-center gap-2 sm:gap-2.5 overflow-x-auto scrollbar-none py-1 px-1 max-w-6xl mx-auto"
+              style={{
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+                WebkitOverflowScrolling: 'touch'
+              }}
+            >
+              {allArtworks.map((item, idx) => {
+                const isActive = idx === currentIndex;
+                return (
+                  <button
+                    key={`thumb-${item.id || idx}`}
+                    ref={(el) => {
+                      thumbRefs.current[idx] = el;
+                    }}
+                    type="button"
+                    onClick={() => {
+                      if (typeof onSelectIndex === 'function') {
+                        onSelectIndex(idx);
+                      }
+                    }}
+                    aria-label={`View ${item.title}`}
+                    style={
+                      isActive
+                        ? {
+                            borderColor: theme.accent,
+                            boxShadow: `0 0 0 2px ${theme.accent}`
+                          }
+                        : {}
+                    }
+                    className={`relative flex-shrink-0 w-13 h-13 sm:w-16 sm:h-16 rounded-lg overflow-hidden transition-all duration-200 focus:outline-none ${
+                      isActive
+                        ? 'opacity-100 scale-105 border-2 z-10'
+                        : 'opacity-50 hover:opacity-95 border border-[#262433] hover:border-[#4b465e]'
+                    }`}
+                  >
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      loading="lazy"
+                      className="w-full h-full object-cover object-center"
+                      onError={(e) => {
+                        if (!e.currentTarget.dataset.triedFallback) {
+                          e.currentTarget.dataset.triedFallback = 'true';
+                          if (item.image && item.image.includes('/uploads/')) {
+                            const base = item.image.split('/uploads/').pop().replace(/\.webp$/, '.jpeg');
+                            e.currentTarget.src = `/images/crafts/${base}`;
+                          }
+                        }
+                      }}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </footer>
     </div>
   );
