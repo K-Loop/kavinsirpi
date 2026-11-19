@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import ProjectLightbox from './ProjectLightbox';
 import { useTheme } from '../context/ThemeContext';
 import { useArtworks } from '../context/ArtworksContext';
+import { sortArtworksHardFirst } from '../data/artworksData';
 import {
   Eye,
   ArrowUpRight,
@@ -23,9 +24,10 @@ export default function ArtworkGallery() {
   const [viewMode, setViewMode] = useState('grid'); // 'grid' (phone/album grid) | 'spotlight' (scrolling reel)
   const [carouselIsHovered, setCarouselIsHovered] = useState(false);
 
-  const filteredArtworks = selectedCategory === "All Works"
+  const filteredArtworks = (selectedCategory === "All Works"
     ? artworks
-    : artworks.filter(art => art.category === selectedCategory);
+    : artworks.filter(art => art.category === selectedCategory)
+  ).slice().sort((a, b) => (a.displayOrder || 99) - (b.displayOrder || 99));
 
   const activeArtwork = activeArtworkIndex !== null ? filteredArtworks[activeArtworkIndex] : null;
 
@@ -284,11 +286,16 @@ export default function ArtworkGallery() {
                     <Maximize2 className="w-3.5 h-3.5" />
                   </div>
 
-                  {/* Static Category Pill (Minimal, top-left) */}
-                  <div className="absolute top-2.5 left-2.5 z-20">
+                  {/* Static Category Pill & Scale Pill (Minimal, top-left) */}
+                  <div className="absolute top-2.5 left-2.5 z-20 flex items-center gap-1.5 flex-wrap">
                     <span className="text-[9px] uppercase tracking-[0.2em] font-medium bg-[#08080c]/80 backdrop-blur-md border border-[#252332] text-[#cfc4b2] px-2 py-0.5 rounded">
                       {artwork.category}
                     </span>
+                    {artwork.scale === 'monumental' && (
+                      <span className="text-[8px] uppercase tracking-wider font-mono bg-[#d48b4e]/20 text-[#f2bc88] border border-[#d48b4e]/40 px-1.5 py-0.5 rounded backdrop-blur-md">
+                        Hard Relief
+                      </span>
+                    )}
                   </div>
 
                   {/* =====================================================================
@@ -403,14 +410,19 @@ export default function ArtworkGallery() {
                   {/* Gradient overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-[#060608]/95 via-[#060608]/30 to-transparent opacity-40 group-hover:opacity-90 transition-opacity duration-300 pointer-events-none" />
 
-                  {/* Top Category Badge */}
-                  <div className="absolute top-3 left-3 z-20">
+                  {/* Top Category Badge & Scale Pill */}
+                  <div className="absolute top-3 left-3 z-20 flex items-center gap-1.5 flex-wrap">
                     <span
                       className="text-[9px] uppercase tracking-[0.2em] font-medium bg-[#0a0a0e]/85 backdrop-blur-md border border-[#2b2938] px-2.5 py-1 rounded"
                       style={{ color: theme.accent }}
                     >
                       {artwork.category}
                     </span>
+                    {artwork.scale === 'monumental' && (
+                      <span className="text-[8px] uppercase tracking-wider font-mono bg-[#d48b4e]/20 text-[#f2bc88] border border-[#d48b4e]/40 px-2 py-0.5 rounded backdrop-blur-md">
+                        Hard Relief
+                      </span>
+                    )}
                   </div>
 
                   {/* Inspect Icon */}

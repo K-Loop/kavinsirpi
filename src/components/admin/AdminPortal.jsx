@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useArtworks } from '../../context/ArtworksContext';
 import { useTheme } from '../../context/ThemeContext';
+import { sortArtworksHardFirst } from '../../data/artworksData';
 import CategoryDropdown from './CategoryDropdown';
 import {
   Upload,
@@ -15,7 +16,6 @@ import {
   Sparkles,
   X,
   Lock,
-  KeyRound,
   ShieldCheck,
   HardDrive,
   Cpu,
@@ -24,7 +24,8 @@ import {
   LogOut,
   Maximize2,
   Eye,
-  Info
+  Info,
+  GripVertical
 } from 'lucide-react';
 
 export default function AdminPortal() {
@@ -37,13 +38,13 @@ export default function AdminPortal() {
     adminUser,
     login,
     logout,
-    getAutoCredentialsInfo,
     getStorageStats,
     uploadPhoto,
     addArtwork,
     deleteArtwork,
     resetToDefaults,
     addCategory,
+    reorderArtworks,
   } = useArtworks();
 
   // Authentication State
@@ -51,7 +52,6 @@ export default function AdminPortal() {
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [autoCreds, setAutoCreds] = useState({ username: 'admin', password: 'kavinsirpi@2026' });
 
   // VPS Storage Stats
   const [storageStats, setStorageStats] = useState(null);
@@ -96,22 +96,153 @@ export default function AdminPortal() {
 
   const fileInputRef = useRef(null);
 
-  // Load auto credentials info and storage stats on mount
+  // Drag-and-drop state
+  const dragItemId = useRef(null);
+  const dragOverItemId = useRef(null);
+  const [dragActiveId, setDragActiveId] = useState(null);
+  const [dragOverId, setDragOverId] = useState(null);
+  const dragYRef = useRef(null);
+  const autoScrollRaf = useRef(null);
+
+  // Stop auto-scroll
+  const stopAutoScroll = useCallback(() => {
+    dragYRef.current = null;
+    if (autoScrollRaf.current) {
+      cancelAnimationFrame(autoScrollRaf.current);
+      autoScrollRaf.current = null;
+    }
+  }, []);
+
+  // Global window auto-scroll while dragging (works everywhere: header, nav, margins, edges)
   useEffect(() => {
-    getAutoCredentialsInfo().then((creds) => {
-      if (creds) setAutoCreds(creds);
-    });
+    const handleWindowDragOver = (e) => {
+      if (!dragItemId.current) return;
+      e.preventDefault();
+      dragYRef.current = e.clientY;
+
+      if (!autoScrollRaf.current) {
+        const scrollStep = () => {
+          if (!dragItemId.current || dragYRef.current === null) {
+            autoScrollRaf.current = null;
+            return;
+          }
+          const y = dragYRef.current;
+          const topZone = 140;
+          const bottomZone = window.innerHeight - 140;
+
+          if (y < topZone) {
+            const factor = Math.max(0.2, (topZone - y) / topZone);
+            window.scrollBy(0, -Math.round(24 * factor));
+          } else if (y > bottomZone) {
+            const factor = Math.max(0.2, (y - bottomZone) / 140);
+            window.scrollBy(0, Math.round(24 * factor));
+          }
+          autoScrollRaf.current = requestAnimationFrame(scrollStep);
+        };
+        autoScrollRaf.current = requestAnimationFrame(scrollStep);
+      }
+    };
+
+    const handleWindowDragEnd = () => {
+      stopAutoScroll();
+      dragItemId.current = null;
+      dragOverItemId.current = null;
+      setDragActiveId(null);
+      setDragOverId(null);
+    };
+
+    window.addEventListener('dragover', handleWindowDragOver, { passive: false });
+    window.addEventListener('dragend', handleWindowDragEnd);
+    window.addEventListener('drop', handleWindowDragEnd);
+
+    return () => {
+      window.removeEventListener('dragover', handleWindowDragOver);
+      window.removeEventListener('dragend', handleWindowDragEnd);
+      window.removeEventListener('drop', handleWindowDragEnd);
+      stopAutoScroll();
+    };
+  }, [stopAutoScroll]);
+
+  const handleDragStart = (e, art) => {
+    const artId = art.id || art._id;
+    dragItemId.current = artId;
+    setDragActiveId(artId);
+    e.dataTransfer.effectAllowed = 'move';
+
+    // Create a compact, high-definition drag badge with artwork title
+    try {
+      const ghost = document.createElement('div');
+      ghost.id = 'drag-ghost-badge';
+      ghost.style.cssText = `
+        position: fixed; top: -9999px; left: -9999px;
+        display: flex; align-items: center; gap: 10px;
+        padding: 8px 16px; background: #161423;
+        border: 2px solid #d48b4e; border-radius: 14px;
+        color: #fbf8f3; font-family: sans-serif; font-size: 13px; font-weight: 600;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.8), 0 0 20px rgba(212,139,78,0.4);
+        z-index: 99999; pointer-events: none;
+      `;
+      ghost.innerHTML = `
+        <span style="color:#d48b4e; font-size:16px;">⣿</span>
+        <span>${art.title || 'Artwork'}</span>
+        <span style="font-size:10px; background:rgba(212,139,78,0.25); color:#f2bc88; padding:2px 8px; border-radius:6px; text-transform:uppercase;">Moving</span>
+      `;
+      document.body.appendChild(ghost);
+      e.dataTransfer.setDragImage(ghost, 20, 20);
+      setTimeout(() => {
+        if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
+      }, 800);
+    } catch (_) {}
+  };
+
+  const handleDragEnter = (e, artId) => {
+    e.preventDefault();
+    dragOverItemId.current = artId;
+    setDragOverId(artId);
+  };
+
+  const handleDragOver = (e, artId) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (artId && dragOverItemId.current !== artId) {
+      dragOverItemId.current = artId;
+      setDragOverId(artId);
+    }
+  };
+
+  const handleDrop = (e, targetArtId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    stopAutoScroll();
+
+    const sourceId = dragItemId.current;
+
+    // Reset drag indicators immediately so subsequent drags work without delay
+    dragItemId.current = null;
+    dragOverItemId.current = null;
+    setDragActiveId(null);
+    setDragOverId(null);
+
+    if (sourceId && targetArtId && String(sourceId) !== String(targetArtId)) {
+      reorderArtworks(sourceId, targetArtId);
+      showToast('Artwork order updated — changes live on public site.');
+    }
+  };
+
+  const handleDragEnd = () => {
+    stopAutoScroll();
+    dragItemId.current = null;
+    dragOverItemId.current = null;
+    setDragActiveId(null);
+    setDragOverId(null);
+  };
+
+  // Load storage stats on mount
+  useEffect(() => {
     getStorageStats().then((stats) => {
       if (stats) setStorageStats(stats);
     });
-  }, [getAutoCredentialsInfo, getStorageStats]);
-
-  // Handle Auto-Fill Credentials
-  const handleAutoFill = () => {
-    setLoginUsername(autoCreds.username);
-    setLoginPassword(autoCreds.password);
-    setLoginError('');
-  };
+  }, [getStorageStats]);
 
   // Handle Login Submit
   const handleLoginSubmit = async (e) => {
@@ -283,7 +414,7 @@ export default function AdminPortal() {
     if (stats) setStorageStats(stats);
   };
 
-  // Filter artworks list
+  // Filter artworks list — use artworks order as-is (drag reorder changes it)
   const filteredList = artworks.filter((item) => {
     const matchesSearch =
       (item.title || '').toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
@@ -292,6 +423,8 @@ export default function AdminPortal() {
     const matchesCategory = activeFilterCat === 'All' || item.category === activeFilterCat;
     return matchesSearch && matchesCategory;
   });
+
+  const isDragging = dragActiveId !== null;
 
   // ==========================================
   // VIEW 1: AUTHENTICATION LOGIN SCREEN
@@ -328,30 +461,6 @@ export default function AdminPortal() {
             </p>
           </div>
 
-          {/* Auto Credentials Banner */}
-          <div className="mb-6 p-4 rounded-2xl bg-[#14121b] border border-[#2d2a3d] space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-xs text-[#f2bc88] font-medium">
-                <KeyRound className="w-3.5 h-3.5 text-[#d48b4e]" />
-                <span>Auto Credentials Configured</span>
-              </div>
-              <button
-                type="button"
-                onClick={handleAutoFill}
-                className="text-[11px] font-mono uppercase bg-[#d48b4e]/20 hover:bg-[#d48b4e]/35 text-[#f2bc88] px-2.5 py-1 rounded-lg border border-[#d48b4e]/40 transition-colors cursor-pointer"
-              >
-                1-Click Auto Fill
-              </button>
-            </div>
-            <div className="text-[11px] font-mono text-[#a9a296] bg-[#0c0b11] p-2.5 rounded-xl border border-[#1f1d2b] flex items-center justify-between">
-              <span>User: <strong className="text-[#fbf8f3]">{autoCreds.username}</strong></span>
-              <span>Pass: <strong className="text-[#fbf8f3]">{autoCreds.password}</strong></span>
-            </div>
-            <p className="text-[10px] text-[#71695f] leading-relaxed">
-              Auto credentials loaded from backend environment (.env)
-            </p>
-          </div>
-
           {/* Login Form */}
           <form onSubmit={handleLoginSubmit} className="space-y-4">
             <div>
@@ -362,7 +471,7 @@ export default function AdminPortal() {
                 type="text"
                 value={loginUsername}
                 onChange={(e) => setLoginUsername(e.target.value)}
-                placeholder="admin"
+                placeholder="sirpi"
                 required
                 className="w-full bg-[#161520] border border-[#2b2938] focus:border-[#d48b4e] rounded-xl px-4 py-2.5 text-sm text-[#fbf8f3] placeholder-[#6b645b] focus:outline-none transition-all"
               />
@@ -866,7 +975,8 @@ export default function AdminPortal() {
                     Existing Artworks ({filteredList.length})
                   </h2>
                   <p className="text-[11px] text-[#8e8578]">
-                    Delete, inspect details, or filter portfolio items
+                    <GripVertical className="inline w-3 h-3 mr-1 text-[#d48b4e]" />
+                    Drag the grip handle to reorder — changes reflect live on site
                   </p>
                 </div>
 
@@ -925,18 +1035,50 @@ export default function AdminPortal() {
               </div>
             </div>
 
-            {/* Artworks List Cards */}
-            <div className="space-y-3">
+            {/* Artworks List Cards — Drag to Reorder */}
+            <div className="space-y-2">
               {filteredList.map((art) => {
                 const artId = art.id || art._id;
                 const isConfirming = confirmDeleteId === artId;
+                const isBeingDragged = dragActiveId === artId;
+                const isDragTarget = dragOverId === artId && dragActiveId !== artId;
 
                 return (
                   <div
                     key={artId}
-                    className="bg-[#100f16] border border-[#211f2d] hover:border-[#d48b4e]/50 rounded-2xl p-4 transition-all duration-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group"
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, art)}
+                    onDragEnter={(e) => handleDragEnter(e, artId)}
+                    onDragOver={(e) => handleDragOver(e, artId)}
+                    onDragEnd={handleDragEnd}
+                    onDrop={(e) => handleDrop(e, artId)}
+                    style={{
+                      opacity: isBeingDragged ? 0.35 : 1,
+                      transform: isDragTarget ? 'scale(1.015)' : 'none',
+                      transition: 'opacity 0.2s, transform 0.15s, border-color 0.2s, box-shadow 0.2s',
+                    }}
+                    className={`border rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group relative select-none
+                      ${isDragTarget
+                        ? 'bg-[#181525] border-[#d48b4e] ring-2 ring-[#d48b4e]/50 shadow-[0_0_24px_rgba(212,139,78,0.35)]'
+                        : isBeingDragged
+                        ? 'bg-[#0d0c14] border-dashed border-[#d48b4e]/50'
+                        : 'bg-[#100f16] border-[#211f2d] hover:border-[#d48b4e]/40'
+                      }`}
                   >
-                    <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                    {/* Visual Drop Target Indicator Bar */}
+                    {isDragTarget && (
+                      <div className="absolute -top-1 left-4 right-4 h-1 bg-gradient-to-r from-transparent via-[#d48b4e] to-transparent rounded-full animate-pulse shadow-[0_0_8px_#d48b4e]" />
+                    )}
+
+                    {/* Drag Handle */}
+                    <div
+                      className="shrink-0 cursor-grab active:cursor-grabbing p-1.5 rounded-lg hover:bg-[#1e1c2a] text-[#554f60] hover:text-[#d48b4e] transition-colors touch-none"
+                      title="Drag grip to reposition"
+                    >
+                      <GripVertical className="w-4 h-4" />
+                    </div>
+
+                    <div className={`flex items-center gap-3.5 min-w-0 flex-1 ${isDragging ? 'pointer-events-none' : ''}`}>
                       {/* Image Thumbnail */}
                       <div
                         onClick={() => setPreviewModalItem(art)}
@@ -977,6 +1119,9 @@ export default function AdminPortal() {
                               • {art.date}
                             </span>
                           )}
+                          <span className="text-[9px] text-[#4a4555] font-mono">
+                            #{art.displayOrder || '—'}
+                          </span>
                         </div>
                         <h3 className="text-xs font-semibold text-[#fbf8f3] group-hover:text-[#f2bc88] transition-colors truncate">
                           {art.title}

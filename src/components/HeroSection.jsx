@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronRight, ChevronLeft, Pause, Play, Sparkles } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useArtworks } from '../context/ArtworksContext';
+import { sortArtworksHardFirst } from '../data/artworksData';
 
 export default function HeroSection() {
   const { theme } = useTheme();
@@ -13,7 +14,10 @@ export default function HeroSection() {
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
 
-  const displayArtworks = artworks.length > 0 ? artworks : [];
+  // Display artworks ordered by explicit displayOrder
+  const displayArtworks = artworks.length > 0
+    ? [...artworks].sort((a, b) => (a.displayOrder || 99) - (b.displayOrder || 99))
+    : [];
   const totalWorks = displayArtworks.length;
   const safeIndex = totalWorks > 0 ? Math.min(currentIndex, totalWorks - 1) : 0;
   const currentArtwork = displayArtworks[safeIndex];
@@ -207,15 +211,22 @@ export default function HeroSection() {
 
             {/* Top Info Bar: Category Chip, Auto-Play Toggle & Slide Counter */}
             <div className="absolute top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-4 flex items-center justify-between z-30 pointer-events-auto">
-              {/* Category Badge */}
-              <div className="bg-[#0a0a0e]/85 backdrop-blur-md border border-[#2b2836] px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-lg">
-                <Sparkles className="w-3 h-3" style={{ color: theme.accent }} />
-                <span
-                  className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] font-medium"
-                  style={{ color: theme.accent }}
-                >
-                  {currentArtwork.category}
-                </span>
+              {/* Category Badge & Hard Relief Tag */}
+              <div className="flex items-center gap-1.5">
+                <div className="bg-[#0a0a0e]/85 backdrop-blur-md border border-[#2b2836] px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-lg">
+                  <Sparkles className="w-3 h-3" style={{ color: theme.accent }} />
+                  <span
+                    className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] font-medium"
+                    style={{ color: theme.accent }}
+                  >
+                    {currentArtwork.category}
+                  </span>
+                </div>
+                {currentArtwork.scale === 'monumental' && (
+                  <span className="hidden sm:inline-block text-[8px] uppercase tracking-wider font-mono bg-[#d48b4e]/20 text-[#f2bc88] border border-[#d48b4e]/40 px-2 py-0.5 rounded-full backdrop-blur-md shadow-lg">
+                    Hard Relief
+                  </span>
+                )}
               </div>
 
               {/* Counter & Play/Pause Button */}

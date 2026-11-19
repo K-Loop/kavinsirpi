@@ -51,6 +51,15 @@ const artworkSchema = new mongoose.Schema(
       default: () =>
         new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
     },
+    displayOrder: {
+      type: Number,
+      default: 99,
+    },
+    scale: {
+      type: String,
+      enum: ['monumental', 'large', 'medium', 'small'],
+      default: 'medium',
+    },
     // Metrics tracked for VPS 4GB disk optimization
     originalSize: {
       type: Number,

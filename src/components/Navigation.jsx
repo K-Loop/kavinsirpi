@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { STUDIO_CONFIG, getWhatsAppUrl, getPhoneUrl } from '../config/studioInfo';
 import { useTheme } from '../context/ThemeContext';
 import { Menu, X, Phone, MessageCircle } from 'lucide-react';
@@ -6,32 +6,51 @@ import { Menu, X, Phone, MessageCircle } from 'lucide-react';
 export default function Navigation() {
   const { theme } = useTheme();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 40) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
+      const currentScrollY = window.scrollY;
+      
+      setIsScrolled(currentScrollY > 20);
+
+      const scrollDiff = currentScrollY - lastScrollY.current;
+      // Scroll delta threshold to avoid accidental micro-toggles
+      if (Math.abs(scrollDiff) > 6) {
+        if (currentScrollY > 70 && scrollDiff > 0) {
+          // Scrolling down -> hide navbar smoothly
+          setIsVisible(false);
+          setIsMobileMenuOpen(false);
+        } else {
+          // Scrolling up or at top -> reveal navbar
+          setIsVisible(true);
+        }
+        lastScrollY.current = currentScrollY;
       }
     };
+
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const navLinks = [
-    { name: 'Artworks', href: '#artworks' },
+    { name: 'Gallery', href: '#gallery-showcase' },
+    { name: 'Overview', href: '#hero' },
+    { name: 'All Artworks', href: '#artworks' },
     { name: 'The Artist', href: '#artist' },
     { name: 'Contact', href: '#contact-direct' },
   ];
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out ${
+        isVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'
+      } ${
         isScrolled
-          ? 'bg-[#0a0a0d]/90 backdrop-blur-md border-b border-[#22202a] py-3.5 shadow-2xl'
-          : 'bg-gradient-to-b from-[#070709]/85 to-transparent py-5 md:py-6'
+          ? 'bg-[#0a0a0d]/75 backdrop-blur-xl border-b border-white/[0.08] py-3.5 shadow-[0_8px_32px_rgba(0,0,0,0.5)]'
+          : 'bg-[#0a0a0d]/50 backdrop-blur-md border-b border-white/[0.04] py-4 md:py-5'
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between">
@@ -50,7 +69,7 @@ export default function Navigation() {
         </a>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden lg:flex items-center gap-8" aria-label="Main Navigation">
+        <nav className="hidden lg:flex items-center gap-7" aria-label="Main Navigation">
           {navLinks.map((link) => (
             <a
               key={link.name}
@@ -66,7 +85,7 @@ export default function Navigation() {
         <div className="hidden md:flex items-center gap-3">
           <a
             href={getPhoneUrl()}
-            className="flex items-center gap-2 text-xs tracking-wider uppercase text-[#cfc4b2] hover:text-[#fbf8f3] px-3.5 py-1.5 border border-[#2d2a36] hover:border-[#d48b4e]/60 rounded-full transition-colors"
+            className="flex items-center gap-2 text-xs tracking-wider uppercase text-[#cfc4b2] hover:text-[#fbf8f3] px-3.5 py-1.5 border border-[#2d2a36] hover:border-[#d48b4e]/60 rounded-full transition-colors backdrop-blur-md bg-black/20"
             title="Call Kavin Sirpi directly"
           >
             <Phone className="w-3.5 h-3.5 text-[#d48b4e]" />
@@ -97,9 +116,9 @@ export default function Navigation() {
         </div>
       </div>
 
-      {/* Mobile Menu Drawer */}
+      {/* Mobile Menu Drawer (Glassmorphic) */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden fixed inset-x-0 top-full bg-[#0a0a0d]/95 backdrop-blur-xl border-b border-[#22202a] px-6 py-8 shadow-2xl animate-fade-in">
+        <div className="lg:hidden fixed inset-x-0 top-full bg-[#0a0a0d]/95 backdrop-blur-2xl border-b border-white/10 px-6 py-8 shadow-2xl animate-fade-in">
           <nav className="flex flex-col gap-4 text-center mb-6">
             {navLinks.map((link) => (
               <a
@@ -137,4 +156,3 @@ export default function Navigation() {
     </header>
   );
 }
-

@@ -53,12 +53,12 @@ const isMongoReady = () => mongoose.connection.readyState === 1;
 router.get('/', async (req, res) => {
   try {
     if (isMongoReady()) {
-      let dbArtworks = await Artwork.find().sort({ createdAt: -1 });
+      let dbArtworks = await Artwork.find().sort({ displayOrder: 1, createdAt: -1 });
       // If DB is empty or missing items, trigger autoSeed
       if (dbArtworks.length < DEFAULT_ARTWORKS.length) {
         console.log(`[Artworks] DB has ${dbArtworks.length}/${DEFAULT_ARTWORKS.length} artworks. Auto-seeding missing items...`);
         await autoSeedArtworksAndPhotos();
-        dbArtworks = await Artwork.find().sort({ createdAt: -1 });
+        dbArtworks = await Artwork.find().sort({ displayOrder: 1, createdAt: -1 });
       }
       if (dbArtworks.length > 0) {
         return res.json({ success: true, artworks: dbArtworks });
@@ -221,6 +221,59 @@ router.post('/', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Error adding artwork:', error);
     return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * PUT /api/artworks/reorder
+ * Protected: Updates displayOrder for multiple artworks
+ * Expects { orders: [ { id, displayOrder }, ... ] }
+ */
+router.put('/reorder', authMiddleware, async (req, res) => {
+  try {
+    const { orders } = req.body;
+    if (!Array.isArray(orders)) {
+      return res.status(400).json({ success: false, message: 'Invalid orders array' });
+    }
+
+    if (isMongoReady()) {
+      const bulkOps = [];
+      for (const item of orders) {
+        if (!item || !item.id) continue;
+        const filter = mongoose.Types.ObjectId.isValid(item.id)
+          ? { _id: item.id }
+          : (item.title ? { title: item.title } : { _id: item.id });
+        bulkOps.push({
+          updateOne: {
+            filter,
+            update: { $set: { displayOrder: Number(item.displayOrder) } }
+          }
+        });
+      }
+      if (bulkOps.length > 0) {
+        await Artwork.bulkWrite(bulkOps);
+      }
+    }
+
+    // Always update fallback JSON store as well
+    const items = getFallbackData();
+    orders.forEach(ord => {
+      const found = items.find(a => 
+        (a.id && ord.id && a.id === ord.id) || 
+        (a._id && ord.id && a._id.toString() === ord.id.toString()) ||
+        (a.title && ord.title && a.title === ord.title)
+      );
+      if (found) {
+        found.displayOrder = Number(ord.displayOrder);
+      }
+    });
+    items.sort((a, b) => (a.displayOrder || 99) - (b.displayOrder || 99));
+    saveFallbackData(items);
+
+    return res.json({ success: true, message: 'Artworks reordered successfully' });
+  } catch (error) {
+    console.error('Error reordering artworks:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 

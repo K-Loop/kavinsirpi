@@ -4,19 +4,45 @@ import { useTheme } from '../context/ThemeContext';
 export default function IntroSplash({ onComplete }) {
   const { theme } = useTheme();
   const [phase, setPhase] = useState(0);
-  const [isSkipped, setIsSkipped] = useState(false);
+  const [isSkipped, setIsSkipped] = useState(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const seen = sessionStorage.getItem('kavin_sirpi_intro_seen');
+        const mediaQuery = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
+        if (seen === 'true' || mediaQuery?.matches) {
+          return true;
+        }
+      }
+    } catch {
+      // Ignore
+    }
+    return false;
+  });
+
+  const handleFinish = () => {
+    try {
+      sessionStorage.setItem('kavin_sirpi_intro_seen', 'true');
+    } catch {
+      // Ignore
+    }
+    setIsSkipped(true);
+    if (typeof onComplete === 'function') {
+      onComplete();
+    }
+  };
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (mediaQuery.matches) {
-      handleFinish();
-      return;
-    }
+    if (isSkipped) return;
 
-    const seen = sessionStorage.getItem('kavin_sirpi_intro_seen');
-    if (seen === 'true') {
-      onComplete();
-      return;
+    try {
+      const seen = sessionStorage.getItem('kavin_sirpi_intro_seen');
+      const mediaQuery = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
+      if (seen === 'true' || mediaQuery?.matches) {
+        handleFinish();
+        return;
+      }
+    } catch {
+      // Ignore
     }
 
     const t1 = setTimeout(() => setPhase(1), 150);
@@ -32,13 +58,7 @@ export default function IntroSplash({ onComplete }) {
       clearTimeout(t4);
       clearTimeout(t5);
     };
-  }, []);
-
-  const handleFinish = () => {
-    sessionStorage.setItem('kavin_sirpi_intro_seen', 'true');
-    setIsSkipped(true);
-    onComplete();
-  };
+  }, [isSkipped]);
 
   if (isSkipped) return null;
 

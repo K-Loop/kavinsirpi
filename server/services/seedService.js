@@ -145,6 +145,8 @@ export const autoSeedArtworksAndPhotos = async () => {
               featured: art.featured ?? true,
               aspect: art.aspect || 'portrait',
               date: art.date,
+              displayOrder: art.displayOrder ?? 99,
+              scale: art.scale || 'medium',
               originalSize: art.originalSize || 0,
               compressedSize: art.compressedSize || 0,
               compressionRatio: art.compressionRatio || 0,
