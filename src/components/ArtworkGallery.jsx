@@ -19,11 +19,11 @@ export default function ArtworkGallery() {
   const { theme } = useTheme();
   const { artworks, categories } = useArtworks();
   const [selectedCategory, setSelectedCategory] = useState("All Works");
-  const [activeArtworkIndex, setActiveArtworkIndex] = useState(null);
+  const [activeArtworkIndex, setActiveArtworkIndex] = useState(() => (artworks.length > 0 ? 0 : null));
   const [hoveredArtwork, setHoveredArtwork] = useState(null);
   const [viewMode, setViewMode] = useState('grid'); // Default to 'grid' (Album Grid) | 'spotlight' (Swipe Reel)
   const [carouselIsHovered, setCarouselIsHovered] = useState(false);
-  const hasAutoOpenedRef = useRef(false);
+  const hasAutoOpenedRef = useRef(artworks.length > 0);
 
   // Drag-to-swipe & progress state for the horizontal reel
   const [isDragging, setIsDragging] = useState(false);

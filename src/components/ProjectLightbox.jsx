@@ -1,4 +1,5 @@
 import React, { useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react';
 import { getWhatsAppUrl } from '../config/studioInfo';
 import { useTheme } from '../context/ThemeContext';
@@ -16,6 +17,7 @@ export default function ProjectLightbox({
 }) {
   const { theme } = useTheme();
   const touchStartX = useRef(null);
+  const thumbStripRef = useRef(null);
   const thumbRefs = useRef([]);
 
   const handleClose = useCallback(() => {
@@ -47,15 +49,17 @@ export default function ProjectLightbox({
     };
   }, [artwork, handleClose, onPrev, onNext, hasPrev, hasNext]);
 
-  // Smoothly auto-center the active thumbnail in the bottom WhatsApp-style strip
+  // Smoothly auto-center the active thumbnail INSIDE the bottom strip only (never scrolls the main page)
   useEffect(() => {
     if (!artwork || currentIndex === null || currentIndex === undefined) return;
+    const container = thumbStripRef.current;
     const activeThumb = thumbRefs.current[currentIndex];
-    if (activeThumb && typeof activeThumb.scrollIntoView === 'function') {
-      activeThumb.scrollIntoView({
-        behavior: 'smooth',
-        inline: 'center',
-        block: 'nearest'
+    if (container && activeThumb) {
+      const targetLeft =
+        activeThumb.offsetLeft - container.clientWidth / 2 + activeThumb.clientWidth / 2;
+      container.scrollTo({
+        left: Math.max(0, targetLeft),
+        behavior: 'smooth'
       });
     }
   }, [artwork, currentIndex]);
@@ -68,7 +72,7 @@ export default function ProjectLightbox({
   const handleTouchEnd = (e) => {
     if (touchStartX.current === null) return;
     const diff = touchStartX.current - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 50) {
+    if (Math.abs(diff) > 40) {
       if (diff > 0 && hasNext) {
         onNext();
       } else if (diff < 0 && hasPrev) {
@@ -78,31 +82,31 @@ export default function ProjectLightbox({
     touchStartX.current = null;
   };
 
-  if (!artwork) return null;
+  if (!artwork || typeof document === 'undefined') return null;
 
   const totalCount = allArtworks.length > 0 ? allArtworks.length : 1;
   const currentNum = (currentIndex !== null && currentIndex !== undefined) ? currentIndex + 1 : 1;
   const customEnquiryMessage = `Hello Kavin Sirpi, I am interested in commissioning a cement relief sculpture similar to "${artwork.title}" (${artwork.category}). Could you please share more details?`;
 
-  return (
+  const lightboxContent = (
     <div
       role="dialog"
       aria-modal="true"
       aria-label={artwork.title}
-      className="fixed inset-0 z-50 flex flex-col justify-between bg-[#050507]/98 backdrop-blur-xl text-[#eee7dc] select-none animate-fade-in"
+      className="fixed inset-0 h-[100dvh] w-screen z-[9999] flex flex-col justify-between bg-[#050507]/98 backdrop-blur-xl text-[#eee7dc] select-none animate-fade-in overflow-hidden"
       onClick={handleClose}
     >
       {/* Top Header: Counter, Category, Title, and Close Button */}
       <header
         onClick={(e) => e.stopPropagation()}
-        className="relative z-40 flex items-center justify-between px-4 sm:px-6 py-3 bg-[#0a0a0e]/95 border-b border-[#1c1a26] flex-shrink-0"
+        className="relative z-40 flex items-center justify-between px-3.5 sm:px-6 py-2.5 sm:py-3 bg-[#0a0a0e]/95 border-b border-[#1c1a26] flex-shrink-0"
       >
-        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-          <span className="text-xs font-mono text-[#8c8475] bg-[#14131b] px-2.5 py-1 rounded-md border border-[#262433] flex-shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <span className="text-[11px] sm:text-xs font-mono text-[#8c8475] bg-[#14131b] px-2 sm:px-2.5 py-1 rounded-md border border-[#262433] flex-shrink-0">
             {currentNum} / {totalCount}
           </span>
           <span
-            className="text-[11px] sm:text-xs uppercase tracking-wider font-medium truncate"
+            className="text-[10px] sm:text-xs uppercase tracking-wider font-medium truncate"
             style={{ color: theme.accent }}
           >
             {artwork.category}
@@ -116,7 +120,7 @@ export default function ProjectLightbox({
         <button
           type="button"
           onClick={handleClose}
-          className="w-9 h-9 rounded-full bg-[#16151f] hover:bg-[#252230] border border-[#2b2838] hover:border-[#d48b4e] flex items-center justify-center text-[#ded3c1] hover:text-[#fbf8f3] transition-all flex-shrink-0"
+          className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#16151f] hover:bg-[#252230] border border-[#2b2838] hover:border-[#d48b4e] flex items-center justify-center text-[#ded3c1] hover:text-[#fbf8f3] transition-all flex-shrink-0"
           title="Close Gallery (Esc)"
           aria-label="Close gallery"
         >
@@ -126,7 +130,7 @@ export default function ProjectLightbox({
 
       {/* Main Stage: Full Focused Artwork View */}
       <main
-        className="relative flex-grow min-h-0 flex items-center justify-center px-3 py-3 sm:px-8 sm:py-4 overflow-hidden"
+        className="relative flex-grow min-h-0 flex items-center justify-center px-2 py-2 sm:px-8 sm:py-4 overflow-hidden"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onClick={(e) => e.stopPropagation()}
@@ -136,7 +140,7 @@ export default function ProjectLightbox({
           <button
             type="button"
             onClick={onPrev}
-            className="absolute left-2.5 sm:left-6 top-1/2 -translate-y-1/2 z-40 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#121118]/85 hover:bg-[#1f1d2a] border border-[#2b2938] hover:border-[#d48b4e] text-[#ded3c1] hover:text-[#fbf8f3] flex items-center justify-center transition-all shadow-2xl backdrop-blur-md"
+            className="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 z-40 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#121118]/85 hover:bg-[#1f1d2a] border border-[#2b2938] hover:border-[#d48b4e] text-[#ded3c1] hover:text-[#fbf8f3] flex items-center justify-center transition-all shadow-2xl backdrop-blur-md"
             aria-label="Previous artwork"
           >
             <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -148,7 +152,7 @@ export default function ProjectLightbox({
           <button
             type="button"
             onClick={onNext}
-            className="absolute right-2.5 sm:right-6 top-1/2 -translate-y-1/2 z-40 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#121118]/85 hover:bg-[#1f1d2a] border border-[#2b2938] hover:border-[#d48b4e] text-[#ded3c1] hover:text-[#fbf8f3] flex items-center justify-center transition-all shadow-2xl backdrop-blur-md"
+            className="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 z-40 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#121118]/85 hover:bg-[#1f1d2a] border border-[#2b2938] hover:border-[#d48b4e] text-[#ded3c1] hover:text-[#fbf8f3] flex items-center justify-center transition-all shadow-2xl backdrop-blur-md"
             aria-label="Next artwork"
           >
             <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -156,11 +160,11 @@ export default function ProjectLightbox({
         )}
 
         {/* Center Artwork Image */}
-        <div className="relative h-full w-full flex items-center justify-center">
+        <div className="relative h-full w-full min-h-0 flex items-center justify-center">
           <img
             src={artwork.image}
             alt={artwork.title}
-            className="max-h-full max-w-full w-auto h-auto object-contain rounded-xl shadow-2xl border border-[#22202c]"
+            className="max-h-[54dvh] sm:max-h-[64dvh] max-w-full w-auto h-auto object-contain rounded-xl shadow-2xl border border-[#22202c]"
             onError={(e) => {
               if (!e.currentTarget.dataset.triedFallback) {
                 e.currentTarget.dataset.triedFallback = 'true';
@@ -177,12 +181,12 @@ export default function ProjectLightbox({
       {/* Bottom Area: Info + WhatsApp CTA + WhatsApp-Style Horizontal Thumbnail Strip */}
       <footer
         onClick={(e) => e.stopPropagation()}
-        className="relative z-40 bg-[#0a0a0e]/95 border-t border-[#1c1a26] flex-shrink-0"
+        className="relative z-40 bg-[#0a0a0e]/95 border-t border-[#1c1a26] flex-shrink-0 pb-[env(safe-area-inset-bottom)]"
       >
         {/* Artwork Info & WhatsApp Enquiry Row */}
-        <div className="px-4 sm:px-6 pt-3 pb-2.5">
-          <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5 text-center sm:text-left">
-            <div className="min-w-0">
+        <div className="px-3.5 sm:px-6 pt-2.5 pb-2">
+          <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
+            <div className="min-w-0 max-w-full">
               <p className="font-display text-sm sm:text-base md:text-lg text-[#fbf8f3] truncate">
                 {artwork.title}
               </p>
@@ -196,9 +200,9 @@ export default function ProjectLightbox({
               target="_blank"
               rel="noopener noreferrer"
               style={{ backgroundColor: theme.accent }}
-              className="inline-flex items-center justify-center gap-2 hover:brightness-110 text-[#0b0b0e] font-semibold text-[11px] sm:text-xs tracking-[0.16em] uppercase px-5 py-2 sm:px-6 sm:py-2.5 rounded-full transition-all shadow-md flex-shrink-0"
+              className="inline-flex items-center justify-center gap-2 hover:brightness-110 text-[#0b0b0e] font-semibold text-[11px] sm:text-xs tracking-[0.15em] uppercase px-4 py-2 sm:px-6 sm:py-2.5 rounded-full transition-all shadow-md flex-shrink-0"
             >
-              <MessageCircle className="w-4 h-4 fill-[#0b0b0e]" />
+              <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-[#0b0b0e]" />
               <span>Enquire on WhatsApp</span>
             </a>
           </div>
@@ -206,8 +210,9 @@ export default function ProjectLightbox({
 
         {/* WhatsApp-Style Horizontal Album Thumbnail Filmstrip */}
         {allArtworks.length > 1 && (
-          <div className="border-t border-[#1a1824] bg-[#07070a]/95 px-3 sm:px-6 py-2.5">
+          <div className="border-t border-[#1a1824] bg-[#07070a]/95 px-2.5 sm:px-6 py-2">
             <div
+              ref={thumbStripRef}
               className="flex items-center gap-2 sm:gap-2.5 overflow-x-auto scrollbar-none py-1 px-1 max-w-6xl mx-auto"
               style={{
                 scrollbarWidth: 'none',
@@ -238,7 +243,7 @@ export default function ProjectLightbox({
                           }
                         : {}
                     }
-                    className={`relative flex-shrink-0 w-13 h-13 sm:w-16 sm:h-16 rounded-lg overflow-hidden transition-all duration-200 focus:outline-none ${
+                    className={`relative flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden transition-all duration-200 focus:outline-none ${
                       isActive
                         ? 'opacity-100 scale-105 border-2 z-10'
                         : 'opacity-50 hover:opacity-95 border border-[#262433] hover:border-[#4b465e]'
@@ -268,4 +273,6 @@ export default function ProjectLightbox({
       </footer>
     </div>
   );
+
+  return createPortal(lightboxContent, document.body);
 }
